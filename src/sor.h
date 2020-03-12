@@ -5,11 +5,27 @@
 #include <iostream>
 #include <vector>
 #include "type.h"
-#include "parse_state.h"
 #include "dataframe.h"
 #include "util.h"
 
 using namespace std;
+
+
+/**
+ * Keeps track of information regarding the current
+ * state of parsing within the .sor file
+ */
+struct ParseState {
+    public: 
+        char ch;
+        bool in_field = false;
+        bool in_quotes = false;
+        unsigned int bytes_read = 0;
+        int line_count = 0;
+        int current_width = 0;
+        int max_width = 0;
+        std::string current_field = "";
+};
 
 /**
  * Object representation of a .sor file
@@ -29,64 +45,64 @@ class SorAdapter {
             char* filename
         ) {
             string file = string(filename);
-            inferSchema(file, from, length);
-            buildDataFrame(file, from, length);
+            infer_schema(file, from, length);
+            build_DataFrame(file, from, length);
         }
 
         //It will need to be implemented in future assignments. 
-        void inferSchema(string filename, unsigned int from, unsigned int length) {
+        void infer_schema(string filename, unsigned int from, unsigned int length) {
             // Used to keep track of the current state of parsing
-            ParseState parseState = ParseState();
+            ParseState parse_state = ParseState();
             // Used to collect all the data within a row. Once a newline is hit, 
             // the staging vector will be pushed to all of the columns. This is
             // done to prevent partial line processing due to a length argument.
-            vector<char> typeVector;
+            vector<char> type_vector;
 
             //create the filestream and skip to the proper location in the file
             fstream fin(filename, fstream::in);
             if (from != 0) {
-                skipTo(fin, from);
+                skip_to(fin, from);
             }
 
             // go character by character until the given length is reached
-            while (fin >> noskipws >> parseState.ch && parseState.bytesRead < length && parseState.lineCount < 500) {
-                parseState.bytesRead++;
-                int ascii = (int)parseState.ch;
+            while (fin >> noskipws >> parse_state.ch && parse_state.bytes_read < length && parse_state.line_count < 500) {
+                parse_state.bytes_read++;
+                int ascii = (int)parse_state.ch;
                 switch (ascii) {
                     // New line Character
                     case 10:
-                        handleNewLine2(&parseState, &typeVector);
+                        handle_new_line2(&parse_state, &type_vector);
                         break;
                     // < Character
                     case 60:
-                        handleOpenTag2(&parseState);
+                        handle_open_tag2(&parse_state);
                         break;
                     // > Character
                     case 62:
-                        handleCloseTag2(&parseState, &typeVector);
+                        handle_close_tag2(&parse_state, &type_vector);
                         break;
                     // " Character
                     case 34:
-                        handleQuote2(&parseState);
+                        handle_quote2(&parse_state);
                         break;
                     // Space character
                     case 32:
-                        if (parseState.inQuotes) {
-                            parseState.currentField = parseState.currentField + parseState.ch;
+                        if (parse_state.in_quotes) {
+                            parse_state.current_field = parse_state.current_field + parse_state.ch;
                         }
                         break;
                     default:
-                        if (parseState.inField) {
-                            parseState.currentField = parseState.currentField + parseState.ch;
+                        if (parse_state.in_field) {
+                            parse_state.current_field = parse_state.current_field + parse_state.ch;
                         }
                         break;
                 }
             }
-            char* types = new char[typeVector.size() + 1];
-            for (int i = 0; i < typeVector.size(); i++) {
-                types[i] = typeVector[i];
+            char* types = new char[type_vector.size() + 1];
+            for (int i = 0; i < type_vector.size(); i++) {
+                types[i] = type_vector[i];
             }
-            types[typeVector.size()] = '\0';
+            types[type_vector.size()] = '\0';
             schema_ = new Schema(types);
             delete[] types;
         }
@@ -97,59 +113,59 @@ class SorAdapter {
          * @param from the number of bytes to skip forward
          * @param length Number of bytes to be read
          */
-        void buildDataFrame(string filename, unsigned int from, unsigned int length) {
+        void build_DataFrame(string filename, unsigned int from, unsigned int length) {
             //Initiazlie DataFrame with the inferred schema
             df_ = new DataFrame(*schema_);
             // Used to keep track of the current state of parsing
-            ParseState parseState = ParseState();
+            ParseState parse_state = ParseState();
             // Used to collect all the data within a row. Once a newline is hit, 
             // the staging vector will be pushed to all of the columns. This is
             // done to prevent partial line processing due to a length argument.
-            vector<string> stagingVector;
+            vector<string> staging_vector;
 
             //create the filestream and skip to the proper location in the file
             fstream fin(filename, fstream::in);
             if (from != 0) {
-                skipTo(fin, from);
+                skip_to(fin, from);
             }
 
             // go character by character until the given length is reached
-            while (fin >> noskipws >> parseState.ch && parseState.bytesRead < length) {
-                parseState.bytesRead++;
-                int ascii = (int)parseState.ch;
+            while (fin >> noskipws >> parse_state.ch && parse_state.bytes_read < length) {
+                parse_state.bytes_read++;
+                int ascii = (int)parse_state.ch;
                 switch (ascii) {
                     // New line Character
                     case 10:
-                        handleNewLine(&parseState, &stagingVector);
+                        handle_new_line(&parse_state, &staging_vector);
                         break;
                     // < Character
                     case 60:
-                        handleOpenTag(&parseState);
+                        handle_open_tag(&parse_state);
                         break;
                     // > Character
                     case 62:
-                        handleCloseTag(&parseState, &stagingVector);
+                        handle_close_tag(&parse_state, &staging_vector);
                         break;
                     // " Character
                     case 34:
-                        handleQuote(&parseState);
+                        handle_quote(&parse_state);
                         break;
                     // Space character
                     case 32:
-                        if (parseState.inQuotes) {
-                            parseState.currentField = parseState.currentField + parseState.ch;
+                        if (parse_state.in_quotes) {
+                            parse_state.current_field = parse_state.current_field + parse_state.ch;
                         }
                         break;
                     default:
-                        if (parseState.inField) {
-                            parseState.currentField = parseState.currentField + parseState.ch;
+                        if (parse_state.in_field) {
+                            parse_state.current_field = parse_state.current_field + parse_state.ch;
                         }
                         break;
                 }
             }
             //If end of file was reached with no newline, add the staging vector
-            if (parseState.bytesRead < length) {
-                writeData(stagingVector, parseState.lineCount);
+            if (parse_state.bytes_read < length) {
+                write_data(staging_vector, parse_state.line_count);
             }
         }
 
@@ -159,7 +175,7 @@ class SorAdapter {
          * @param fin The file stream that will be read in
          * @param from The number of bytes to skip forward
          */
-        void skipTo(fstream &fin, unsigned int from) {
+        void skip_to(fstream &fin, unsigned int from) {
             unsigned int bytesRead = 0;
             char ch;
             while (bytesRead < from && fin >> noskipws >> ch) {
@@ -174,17 +190,17 @@ class SorAdapter {
          * @param parseState The given ParseState configuration
          * @param typeVector The current typeVector
          */
-        void handleNewLine2(ParseState* parseState, vector<char>*  typeVector) {
-            if (!parseState->inQuotes) {
-                parseState->lineCount++;
-                parseState->inField = false;
-                if (parseState->currentWidth > parseState->maxWidth) {
+        void handle_new_line2(ParseState* parseState, vector<char>*  typeVector) {
+            if (!parseState->in_quotes) {
+                parseState->line_count++;
+                parseState->in_field = false;
+                if (parseState->current_width > parseState->max_width) {
                     // update the max width of the parse state
-                    parseState->maxWidth = parseState->currentWidth;
+                    parseState->max_width = parseState->current_width;
                 }
-                parseState->currentWidth = 0;
+                parseState->current_width = 0;
             } else {
-                parseState->currentField = parseState->currentField + parseState->ch;
+                parseState->current_field = parseState->current_field + parseState->ch;
             }
         }
 
@@ -192,12 +208,12 @@ class SorAdapter {
          * Updates the given ParseState when a `<` is encountered
          * @param parseState The given ParseState configuration
          */
-        void handleOpenTag2(ParseState* parseState) {
-            if (parseState->inQuotes || parseState->inField) {
-                parseState->currentField = parseState->currentField + parseState->ch;
-            } else if (!parseState->inField) {
+        void handle_open_tag2(ParseState* parseState) {
+            if (parseState->in_quotes || parseState->in_field) {
+                parseState->current_field = parseState->current_field + parseState->ch;
+            } else if (!parseState->in_field) {
                 // set the inField flag to true to indicate we are at the beginning of a new field
-                parseState->inField = true;
+                parseState->in_field = true;
             }
         }
 
@@ -206,20 +222,20 @@ class SorAdapter {
          * @param parseState The given ParseState configuration
          * @param stagingVector The current stagingVector
          */
-        void handleCloseTag2(ParseState* parseState, vector<char>* typeVector) {
-            if (!parseState->inQuotes) {
-                if (parseState->inField) {
-                    if (typeVector->size() <= parseState->currentWidth) {
-                        typeVector->push_back(mapToChar(getFieldType(parseState->currentField)));
+        void handle_close_tag2(ParseState* parseState, vector<char>* typeVector) {
+            if (!parseState->in_quotes) {
+                if (parseState->in_field) {
+                    if (typeVector->size() <= parseState->current_width) {
+                        typeVector->push_back(map_to_char(get_field_type(parseState->current_field)));
                     } else {
-                        typeVector->data()[parseState->currentWidth] = updateType(mapToType(typeVector->at(parseState->currentWidth)), getFieldType(parseState->currentField));
+                        typeVector->data()[parseState->current_width] = update_type(map_to_type(typeVector->at(parseState->current_width)), get_field_type(parseState->current_field));
                     }
-                    parseState->currentWidth++;
-                    parseState->inField = false;
-                    parseState->currentField = "";
+                    parseState->current_width++;
+                    parseState->in_field = false;
+                    parseState->current_field = "";
                 }
             } else {
-                parseState->currentField = parseState->currentField + parseState->ch;
+                parseState->current_field = parseState->current_field + parseState->ch;
             }
         }
 
@@ -228,12 +244,12 @@ class SorAdapter {
          * I.e. STRING replaces FLOAT replaces INT replaces BOOL
          * @param incomingType The type that may replace this column's current Type
          */
-        char updateType(Type incomingType, Type newType) {
+        char update_type(Type incomingType, Type newType) {
             // check if the old column Type should be updated
-            if (shouldChangeType(newType, incomingType)) {
-                return mapToChar(incomingType);
+            if (should_change_type(newType, incomingType)) {
+                return map_to_char(incomingType);
             } else {
-                return mapToChar(newType);
+                return map_to_char(newType);
             }
         }
 
@@ -241,10 +257,10 @@ class SorAdapter {
          * Updates the given ParseState when a quote is encountered
          * @param parseState The given ParseState configuration
          */
-        void handleQuote2(ParseState* parseState) {
-            if (parseState->inField) {
-                parseState->inQuotes = !parseState->inQuotes;
-                parseState->currentField = parseState->currentField + parseState->ch;
+        void handle_quote2(ParseState* parseState) {
+            if (parseState->in_field) {
+                parseState->in_quotes = !parseState->in_quotes;
+                parseState->current_field = parseState->current_field + parseState->ch;
             }
         }
 
@@ -254,89 +270,89 @@ class SorAdapter {
          * @param parseState The given ParseState configuration
          * @param stagingVector The current stagingVector
          */
-        void handleNewLine(ParseState* parseState, vector<string>* stagingVector) {
-            if (!parseState->inQuotes) {
+        void handle_new_line(ParseState* parse_state, vector<string>* stagingVector) {
+            if (!parse_state->in_quotes) {
                 // add the staging vector to columns
-                writeData(*stagingVector, parseState->lineCount);
+                write_data(*stagingVector, parse_state->line_count);
                 // clear the stagingVector for the next line
                 stagingVector->clear();
-                parseState->lineCount++;
-                parseState->inField = false;
-                if (parseState->currentWidth > parseState->maxWidth) {
+                parse_state->line_count++;
+                parse_state->in_field = false;
+                if (parse_state->current_width > parse_state->max_width) {
                     // update the max width of the parse state
-                    parseState->maxWidth = parseState->currentWidth;
+                    parse_state->max_width = parse_state->current_width;
                 }
-                parseState->currentWidth = 0;
+                parse_state->current_width = 0;
             } else {
-                parseState->currentField = parseState->currentField + parseState->ch;
+                parse_state->current_field = parse_state->current_field + parse_state->ch;
             }
         }
 
         /**
          * Updates the given ParseState when<` is encountered
-         * @param parseState The given ParseState configuration
+         * @param parse_state The given ParseState configuration
          */
-        void handleOpenTag(ParseState* parseState) {
-            if (parseState->inQuotes || parseState->inField) {
-                parseState->currentField = parseState->currentField + parseState->ch;
-            } else if (!parseState->inField) {
+        void handle_open_tag(ParseState* parse_state) {
+            if (parse_state->in_quotes || parse_state->in_field) {
+                parse_state->current_field = parse_state->current_field + parse_state->ch;
+            } else if (!parse_state->in_field) {
                 // set the inField flag to true to indicate we are at the beginning of a new field
-                parseState->inField = true;
+                parse_state->in_field = true;
             }
         }
 
         /**
          * Updates the given ParseState and stagingVector when a `>` is encountered
-         * @param parseState The given ParseState configuration
-         * @param stagingVector The current stagingVector
+         * @param parse_state The given ParseState configuration
+         * @param staging_vector The current stagingVector
          */
-        void handleCloseTag(ParseState* parseState, vector<string>* stagingVector) {
-            if (!parseState->inQuotes) {
-                if (parseState->inField) {
-                    parseState->currentWidth++;
-                    parseState->inField = false;
-                    trim(parseState->currentField);
-                    stagingVector->push_back(parseState->currentField);
-                    parseState->currentField = "";
+        void handle_close_tag(ParseState* parse_state, vector<string>* staging_vector) {
+            if (!parse_state->in_quotes) {
+                if (parse_state->in_field) {
+                    parse_state->current_width++;
+                    parse_state->in_field = false;
+                    trim(parse_state->current_field);
+                    staging_vector->push_back(parse_state->current_field);
+                    parse_state->current_field = "";
                 }
             } else {
-                parseState->currentField = parseState->currentField + parseState->ch;
+                parse_state->current_field = parse_state->current_field + parse_state->ch;
             }
         }
 
         /**
          * Updates the given ParseState when a quote is encountered
-         * @param parseState The given ParseState configuration
+         * @param parse_state The given ParseState configuration
          */
-        void handleQuote(ParseState* parseState) {
-            if (parseState->inField) {
-                parseState->inQuotes = !parseState->inQuotes;
-                parseState->currentField = parseState->currentField + parseState->ch;
+        void handle_quote(ParseState* parse_state) {
+            if (parse_state->in_field) {
+                parse_state->in_quotes = !parse_state->in_quotes;
+                parse_state->current_field = parse_state->current_field + parse_state->ch;
             }
         }
 
         /**
          * Adds the staging vector to the columns
-         * @param stagingVector vector of strings representing a row of data to be added
+         * @param staging_vector vector of strings representing a row of data to be added
          * @param row Row number, starting at 1
          */  
-        void writeData(vector<string> stagingVector, int row) {
-            for (int i = 0; i < stagingVector.size(); i++) {
-                string currentField = stagingVector[i];
+        void write_data(vector<string> staging_vector, int row) {
+            for (int i = 0; i < staging_vector.size(); i++) {
+                string current_field = staging_vector[i];
                 //add the data contained within the field to columns
-                if (currentField != "") {
+                if (current_field != "") {
                     switch(schema_->type(i)) {
                         case 'B':
-                            df_->set(i, row, parseBool(currentField));
+                            df_->set(i, row, parse_bool(current_field));
                             break;
                         case 'F':
-                            df_->set(i, row, parseFloat(currentField));
+                            df_->set(i, row, parse_float(current_field));
                             break;
                         case 'S':
-                            df_->set(i, row, parseString(currentField));
+                            df_->set(i, row, parse_string(current_field));
                             break;
                         case 'I':
-                            df_->set(i, row, parseInt(currentField));
+                            df_->set(i, row, parse_int(current_field));
                             break;
                         default:
                             assert("Unrecognized type" && false);

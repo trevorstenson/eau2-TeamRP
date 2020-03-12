@@ -11,9 +11,8 @@ using namespace std;
  * Convenience wrapper around stoi, returns an integer from a string
  * @param s The string to be parsed
  * @return the parsed integer
- * 
  */
-int parseInt(string value) {
+int parse_int(string value) {
     if (value == "") {
         return NULL;
     } else {
@@ -26,7 +25,7 @@ int parseInt(string value) {
  * @param s The string to be parsed
  * @return parsed float
  */
-float parseFloat(string value) {
+float parse_float(string value) {
     if (value == "") {
         return NULL;
     } else {
@@ -39,7 +38,7 @@ float parseFloat(string value) {
  * @param s The string to be parsed
  * @return bool from string
  */
-bool parseBool(string value) {
+bool parse_bool(string value) {
     if (value == "") {
         return NULL;
     } else if (value == "1") {
@@ -58,7 +57,7 @@ bool parseBool(string value) {
  * @param s The string to be parsed
  * @return bool from string
  */
-String* parseString(string value) {
+String* parse_string(string value) {
     if (value == "") {
         return nullptr;
     } else {
@@ -71,7 +70,7 @@ String* parseString(string value) {
  * @param s The string to be evaluated
  * @return if s is an integer
  */
-bool isInt(string value) {
+bool is_int(string value) {
     if (value.find("\"")  != string::npos) {
         return false;
     } else {
@@ -86,7 +85,7 @@ bool isInt(string value) {
  * @param s The string to be evaluated
  * @return bool if the string is a float
  */
-bool isFloat(string value) {
+bool is_float(string value) {
     if (value.find("\"")  != string::npos) {
         return false;
     } else {
@@ -101,7 +100,7 @@ bool isFloat(string value) {
  * @param s The string to be evaluated
  * @return bool: if string is 1 or 0
  */
-bool isBool(string value) {
+bool is_bool(string value) {
     if (value.find("\"")  != string::npos) {
         return false;
     } else {
@@ -114,7 +113,7 @@ bool isBool(string value) {
  * @param value The string to be evaluated
  * @return bool from string
  */
-bool isString(string value) {
+bool is_string(string value) {
     if (value == "") return true;
     //regex used when in quotes
     regex quotedRegex("^(\")(.*)(\")");
@@ -127,7 +126,7 @@ bool isString(string value) {
 }
 
 // trim from both ends (in place)
-void trimWhitespace(string &s) {
+void trim_whitespace(string &s) {
     //Trim the left
     s.erase(s.begin(), find_if(s.begin(), s.end(), [](int ch) {
         return !isspace(ch);
@@ -138,7 +137,7 @@ void trimWhitespace(string &s) {
     }).base(), s.end());
 }
 
-void trimQuotes(string &s) {
+void trim_quotes(string &s) {
     if (s.size() >= 2 && s[0] == '\"' && s[s.size() - 1] == '\"') {
         s.erase(0, 1);
         s.erase(s.size() - 1, 1);
@@ -146,8 +145,8 @@ void trimQuotes(string &s) {
 }
 
 void trim(string &s) {
-    trimWhitespace(s);
-    trimQuotes(s);
+    trim_whitespace(s);
+    trim_quotes(s);
 }
 
 /**
@@ -155,12 +154,12 @@ void trim(string &s) {
  *  @param fieldValue The string to be evaluated
  *  @return The most restrictive type fieldValue can represent
  */ 
-Type getFieldType(string fieldValue) {
-    trimWhitespace(fieldValue);
-    if (isBool(fieldValue)) return BOOL;
-    if (isInt(fieldValue)) return INT;
-    if (isFloat(fieldValue)) return FLOAT;
-    if (isString(fieldValue)) return STRING;
+Type get_field_type(string fieldValue) {
+    trim_whitespace(fieldValue);
+    if (is_bool(fieldValue)) return BOOL;
+    if (is_int(fieldValue)) return INT;
+    if (is_float(fieldValue)) return FLOAT;
+    if (is_string(fieldValue)) return STRING;
     return BOOL;
 }
 
@@ -170,7 +169,7 @@ Type getFieldType(string fieldValue) {
  * @param newType The new type coming in
  * @return True if the newType should override/replace the old type, false otherwise
  */
-bool shouldChangeType(Type oldType, Type newType) {
+bool should_change_type(Type oldType, Type newType) {
     return newType > oldType;
 }
 
@@ -179,7 +178,7 @@ bool shouldChangeType(Type oldType, Type newType) {
  * @param type The character representation on the type
  * @return the type
  */
-Type mapToType(char type) {
+Type map_to_type(char type) {
     switch (type) {
         case 'B':
             return BOOL;
@@ -204,7 +203,7 @@ Type mapToType(char type) {
  * @param type The Type 
  * @return the character representation of the type
  */
-char mapToChar(Type type) {
+char map_to_char(Type type) {
     switch (type) {
         case BOOL:
             return 'B';

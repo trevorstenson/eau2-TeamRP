@@ -28,6 +28,6 @@ void sor_adapter() {
 int main() {
     sor_adapter();
 
-    cout << "+++SOR adapter tests passed+++\n";
+    cout << "+++++++SOR adapter tests passed+++++++\n\n";
     return 0;
 }
