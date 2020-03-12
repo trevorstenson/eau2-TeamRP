@@ -1,8 +1,11 @@
 //CwC
+#pragma once 
 
 #include <regex>
 #include "type.h"
 #include <string>
+
+using namespace std;
 
 /**
  * Convenience wrapper around stoi, returns an integer from a string
@@ -123,12 +126,37 @@ bool isString(string value) {
     return regex_match(value, nonQuotedRegex);
 }
 
+// trim from both ends (in place)
+void trimWhitespace(string &s) {
+    //Trim the left
+    s.erase(s.begin(), find_if(s.begin(), s.end(), [](int ch) {
+        return !isspace(ch);
+    }));
+    //Trim the right
+    s.erase(find_if(s.rbegin(), s.rend(), [](int ch) {
+        return !isspace(ch);
+    }).base(), s.end());
+}
+
+void trimQuotes(string &s) {
+    if (s.size() >= 2 && s[0] == '\"' && s[s.size() - 1] == '\"') {
+        s.erase(0, 1);
+        s.erase(s.size() - 1, 1);
+    }
+}
+
+void trim(string &s) {
+    trimWhitespace(s);
+    trimQuotes(s);
+}
+
 /**
  * Determines the most restrictive type that can be applied to a string
  *  @param fieldValue The string to be evaluated
  *  @return The most restrictive type fieldValue can represent
  */ 
 Type getFieldType(string fieldValue) {
+    trimWhitespace(fieldValue);
     if (isBool(fieldValue)) return BOOL;
     if (isInt(fieldValue)) return INT;
     if (isFloat(fieldValue)) return FLOAT;
@@ -152,7 +180,6 @@ bool shouldChangeType(Type oldType, Type newType) {
  * @return the type
  */
 Type mapToType(char type) {
-        cout << type << flush;
     switch (type) {
         case 'B':
             return BOOL;

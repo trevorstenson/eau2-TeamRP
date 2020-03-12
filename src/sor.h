@@ -82,12 +82,13 @@ class SorAdapter {
                         break;
                 }
             }
-            char* types = new char[typeVector.size()];
+            char* types = new char[typeVector.size() + 1];
             for (int i = 0; i < typeVector.size(); i++) {
                 types[i] = typeVector[i];
             }
+            types[typeVector.size()] = '\0';
             schema_ = new Schema(types);
-            delete types;
+            delete[] types;
         }
 
         /**
@@ -294,6 +295,7 @@ class SorAdapter {
                 if (parseState->inField) {
                     parseState->currentWidth++;
                     parseState->inField = false;
+                    trim(parseState->currentField);
                     stagingVector->push_back(parseState->currentField);
                     parseState->currentField = "";
                 }
