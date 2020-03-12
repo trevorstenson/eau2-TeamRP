@@ -33,10 +33,61 @@ class SorAdapter {
             buildDataFrame(file, from, length);
         }
 
-        //NOTE: This was implemented hard-coded to prototype reading in with our SorAdapter.
         //It will need to be implemented in future assignments. 
         void inferSchema(string filename, unsigned int from, unsigned int length) {
-            schema_ = new Schema("BFSIBFSIBF");
+            // Used to keep track of the current state of parsing
+            ParseState parseState = ParseState();
+            // Used to collect all the data within a row. Once a newline is hit, 
+            // the staging vector will be pushed to all of the columns. This is
+            // done to prevent partial line processing due to a length argument.
+            vector<char> typeVector;
+
+            //create the filestream and skip to the proper location in the file
+            fstream fin(filename, fstream::in);
+            if (from != 0) {
+                skipTo(fin, from);
+            }
+
+            // go character by character until the given length is reached
+            while (fin >> noskipws >> parseState.ch && parseState.bytesRead < length && parseState.lineCount < 500) {
+                parseState.bytesRead++;
+                int ascii = (int)parseState.ch;
+                switch (ascii) {
+                    // New line Character
+                    case 10:
+                        handleNewLine2(&parseState, &typeVector);
+                        break;
+                    // < Character
+                    case 60:
+                        handleOpenTag2(&parseState);
+                        break;
+                    // > Character
+                    case 62:
+                        handleCloseTag2(&parseState, &typeVector);
+                        break;
+                    // " Character
+                    case 34:
+                        handleQuote2(&parseState);
+                        break;
+                    // Space character
+                    case 32:
+                        if (parseState.inQuotes) {
+                            parseState.currentField = parseState.currentField + parseState.ch;
+                        }
+                        break;
+                    default:
+                        if (parseState.inField) {
+                            parseState.currentField = parseState.currentField + parseState.ch;
+                        }
+                        break;
+                }
+            }
+            char* types = new char[typeVector.size()];
+            for (int i = 0; i < typeVector.size(); i++) {
+                types[i] = typeVector[i];
+            }
+            schema_ = new Schema(types);
+            delete types;
         }
 
         /**
@@ -118,6 +169,86 @@ class SorAdapter {
         }
 
         /**
+         * Updates the given ParseState and typeVector when a new line is encountered
+         * @param parseState The given ParseState configuration
+         * @param typeVector The current typeVector
+         */
+        void handleNewLine2(ParseState* parseState, vector<char>*  typeVector) {
+            if (!parseState->inQuotes) {
+                parseState->lineCount++;
+                parseState->inField = false;
+                if (parseState->currentWidth > parseState->maxWidth) {
+                    // update the max width of the parse state
+                    parseState->maxWidth = parseState->currentWidth;
+                }
+                parseState->currentWidth = 0;
+            } else {
+                parseState->currentField = parseState->currentField + parseState->ch;
+            }
+        }
+
+        /**
+         * Updates the given ParseState when a `<` is encountered
+         * @param parseState The given ParseState configuration
+         */
+        void handleOpenTag2(ParseState* parseState) {
+            if (parseState->inQuotes || parseState->inField) {
+                parseState->currentField = parseState->currentField + parseState->ch;
+            } else if (!parseState->inField) {
+                // set the inField flag to true to indicate we are at the beginning of a new field
+                parseState->inField = true;
+            }
+        }
+
+        /**
+         * Updates the given ParseState and stagingVector when a `>` is encountered
+         * @param parseState The given ParseState configuration
+         * @param stagingVector The current stagingVector
+         */
+        void handleCloseTag2(ParseState* parseState, vector<char>* typeVector) {
+            if (!parseState->inQuotes) {
+                if (parseState->inField) {
+                    if (typeVector->size() <= parseState->currentWidth) {
+                        typeVector->push_back(mapToChar(getFieldType(parseState->currentField)));
+                    } else {
+                        typeVector->data()[parseState->currentWidth] = updateType(mapToType(typeVector->at(parseState->currentWidth)), getFieldType(parseState->currentField));
+                    }
+                    parseState->currentWidth++;
+                    parseState->inField = false;
+                    parseState->currentField = "";
+                }
+            } else {
+                parseState->currentField = parseState->currentField + parseState->ch;
+            }
+        }
+
+        /**
+         * Updates the type of this Column if the incomingType is less restrictive than the currentType
+         * I.e. STRING replaces FLOAT replaces INT replaces BOOL
+         * @param incomingType The type that may replace this column's current Type
+         */
+        char updateType(Type incomingType, Type newType) {
+            // check if the old column Type should be updated
+            if (shouldChangeType(newType, incomingType)) {
+                return mapToChar(incomingType);
+            } else {
+                return mapToChar(newType);
+            }
+        }
+
+        /**
+         * Updates the given ParseState when a quote is encountered
+         * @param parseState The given ParseState configuration
+         */
+        void handleQuote2(ParseState* parseState) {
+            if (parseState->inField) {
+                parseState->inQuotes = !parseState->inQuotes;
+                parseState->currentField = parseState->currentField + parseState->ch;
+            }
+        }
+
+
+        /**
          * Updates the given ParseState and stagingVector when a new line is encountered
          * @param parseState The given ParseState configuration
          * @param stagingVector The current stagingVector
@@ -141,7 +272,7 @@ class SorAdapter {
         }
 
         /**
-         * Updates the given ParseState when a `<` is encountered
+         * Updates the given ParseState when<` is encountered
          * @param parseState The given ParseState configuration
          */
         void handleOpenTag(ParseState* parseState) {
@@ -211,93 +342,6 @@ class SorAdapter {
                 }
             }
         }
-
-        /**
-         * Prints the Sor. Useful for debugging.
-         */
-        // void printTransposed() {
-        //     cout << "\nTranspose:\n";
-        //     for (Column* c: columns) {
-        //         c->print(10);
-        //         cout << "\n";
-        //     }
-        // }
-
-        /**
-         * Prints the column type of the column at the specified index
-         * @param column the index of the column (starting at 0)
-         */
-        // void printColumnType(unsigned int column) {
-        //     if (column <= columns.size() - 1) {
-        //         Type type = schema_->type(column);
-        //         cout << schema_->type(column) << endl;
-        //     } else {
-        //         assert("Invalid column. Program terminated." && false);
-        //     }
-        // }
-
-        /**
-         * Prints the string for the value at the given column and row
-         * @param col Column index (starting at 0)
-         * @param offset Row index (starting at 0)
-         */
-        // void printValue(unsigned int col, unsigned int offset) {
-        //     string value = getValueAt(col, offset);
-        //     if (columns[col]->getType() == STRING) {
-        //         value = "\"" + value + "\"";
-        //     }
-        //     cout << value << endl;
-        // }
-        
-        /**
-         * Gets the string for the value at the given column and row
-         * @param column Column index (starting at 0)
-         * @param row Row index (starting at 0)
-         * @return The value's string representation
-         */
-        // string getValueAt(unsigned int column, unsigned int row) {
-        //     if (column >= columns.size()) {
-        //         assert("Column index out of bounds exception." && false);
-        //     }
-        //     string* str = columns[column]->getValue(row);
-        //     if (str == nullptr) {
-        //         return "";
-        //     } else {
-        //         return *str;
-        //     }
-        // }
-
-        /**
-         * Prints 1 if the value of the given column and row is missing
-         * @param col the index of the column (starting at 0)
-         * @param row the index of the row (starting at 0)
-         */
-        // void printIsMissing(unsigned int col, unsigned int row) {
-        //     bool missing = 0;
-        //     if (col <= columns.size() - 1) {
-        //         if (row > getMaxColumnHeight() - 1) {
-        //             assert("Index out of bounds. Program terminated." && false);
-        //         } else if (row <= columns[col]->values.size() - 1) {
-        //             if (columns[col]->getValue(row) == nullptr) {
-        //                 missing = 1;
-        //             }
-        //         } else {
-        //             missing = 1;
-        //         }
-        //     } else {
-        //         assert("Index out of bounds. Program terminated." && false);
-        //     }
-        //     cout << missing << endl;
-        // } 
-
-        // unsigned int getMaxColumnHeight() {
-        //     unsigned int max = 0;
-        //     for(int i = 0; i < columns.size() - 1; i++) {
-        //         int height = columns[i]->length();
-        //         if (height > max) max = height;
-        //     }
-        //     return max;
-        // }
 
         DataFrame* get_df() {
             return df_;
