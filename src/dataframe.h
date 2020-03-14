@@ -51,8 +51,8 @@ class DataFrame : public Object {
         case 'S':
           columns[i] = new StringColumn();
           break;
-        case 'F':
-          columns[i] = new FloatColumn();
+        case 'D':
+          columns[i] = new DoubleColumn();
           break;
         default:
           assert("Type other than B, I, F, or S found." && false);
@@ -71,6 +71,7 @@ class DataFrame : public Object {
       if (temp != nullptr) {
         schema->col_names[i] = temp->clone();
       }
+      delete temp;
     }
     for (int i = 0; i < schema->width(); i++) {
       switch (schema->type(i)) {
@@ -83,8 +84,8 @@ class DataFrame : public Object {
         case 'S':
           columns[i] = new StringColumn();
           break;
-        case 'F':
-          columns[i] = new FloatColumn();
+        case 'D':
+          columns[i] = new DoubleColumn();
           break;
         default:
           assert("Type other than B, I, F, or S found." && false);
@@ -113,8 +114,8 @@ class DataFrame : public Object {
       case 'B':
         addCol = col->as_bool()->clone();
         break;
-      case 'F':
-        addCol = col->as_float()->clone();
+      case 'D':
+        addCol = col->as_double()->clone();
         break;
       case 'I':
         addCol = col->as_int()->clone();
@@ -165,9 +166,9 @@ class DataFrame : public Object {
     checkIndices(col, row, 'B');
     return columns[col]->as_bool()->get(row);
   }
-  float get_float(size_t col, size_t row) {
-    checkIndices(col, row, 'F');
-    return columns[col]->as_float()->get(row);
+  double get_double(size_t col, size_t row) {
+    checkIndices(col, row, 'D');
+    return columns[col]->as_double()->get(row);
   }
   String* get_string(size_t col, size_t row) {
     checkIndices(col, row, 'S');
@@ -209,12 +210,12 @@ class DataFrame : public Object {
       column->set(row, val);
     }
   }
-  void set(size_t col, size_t row, float val){
-    checkIndices(col, row, 'F');
+  void set(size_t col, size_t row, double val){
+    checkIndices(col, row, 'D');
     schema->ensure_length(row);
-    FloatColumn* column = columns[col]->as_float();
+    DoubleColumn* column = columns[col]->as_double();
     if (!column) {
-      assert("Unable to cast as FloatColumn." && false);
+      assert("Unable to cast as DoubleColumn." && false);
     } else {
       column->set(row, val);
     }
@@ -258,8 +259,8 @@ class DataFrame : public Object {
             row.set(i, boolCol->get(idx));
             break;
           }
-          case 'F': {
-            FloatColumn* fCol = columns[i]->as_float();
+          case 'D': {
+            DoubleColumn* fCol = columns[i]->as_double();
             row.set(i, fCol->get(idx));
             break;
           }
@@ -303,8 +304,8 @@ class DataFrame : public Object {
             columns[i]->as_bool()->set(idx, row.get_bool(i));  
             break;
           }
-          case 'F': {
-            columns[i]->as_float()->set(idx, row.get_float(i));  
+          case 'D': {
+            columns[i]->as_double()->set(idx, row.get_double(i));  
             break;
           }
           case 'S': {

@@ -74,8 +74,8 @@ class Parser {
                         case 'B':
                             df->set(i, line_count, parse_bool(current_field));
                             break;
-                        case 'F':
-                            df->set(i, line_count, parse_float(current_field));
+                        case 'D':
+                            df->set(i, line_count, parse_double(current_field));
                             break;
                         case 'S':
                             df->set(i, line_count, parse_string(current_field));
@@ -173,7 +173,7 @@ class Parser {
 
         /**
          * Updates the type of this Column if the incomingType is less restrictive than the currentType
-         * I.e. STRING replaces FLOAT replaces INT replaces BOOL
+         * I.e. STRING replaces DOUBLE replaces INT replaces BOOL
          * @param old_type The type that wa previosuly present
          * @param new_type The type that may replace this column's current Type
          */
@@ -270,6 +270,7 @@ class SorAdapter {
             // Parses the file into the DF
             Parser* p = new Parser(length, df_);
             p->read_file(fin);
+            delete p;
         }
 
         /**

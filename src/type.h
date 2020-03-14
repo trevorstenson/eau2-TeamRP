@@ -6,6 +6,6 @@
 enum Type {
     BOOL,
     INT,
-    FLOAT,
+    DOUBLE,
     STRING
 }; 

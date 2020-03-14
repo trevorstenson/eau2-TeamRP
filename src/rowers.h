@@ -24,8 +24,8 @@ class SumNumbersFielder : public Fielder {
 
         void accept(bool b) {}
 
-        void accept(float f) {
-            sum_ += f;
+        void accept(double d) {
+            sum_ += d;
         }
 
         void accept(String* s) {}
@@ -103,8 +103,8 @@ class FibSumFielder : public Fielder {
 
         void accept(bool b) {}
 
-        void accept(float f) {
-            total_fib_ += fib((int)f % mod_);
+        void accept(double d) {
+            total_fib_ += fib((int)d % mod_);
         }
 
         void accept(String* s) {}
@@ -195,10 +195,10 @@ class HashingFielder : public Fielder {
             }
         }
 
-        void accept(float f) {
-            for (int j = 0; j < floor(f); j++) {
+        void accept(double d) {
+            for (int j = 0; j < floor(d); j++) {
                 for (int i = 0; i < strlen(hash_); i++) {
-                    hash_[i] = ((int)(hash_[i] + floor(f)) % 26) + 97;
+                    hash_[i] = ((int)(hash_[i] + floor(d)) % 26) + 97;
                 }
             }
         }
@@ -299,8 +299,8 @@ class InversionFielder : public Fielder {
             col_++;
         }
 
-        void accept(float f) {
-            newRow->set(col_, -1 * f);
+        void accept(double d) {
+            newRow->set(col_, -1 * d);
             col_++;
         }
 
@@ -460,8 +460,8 @@ class GreaterThan30 : public Rower {
                         //do nothing
                         break;
                     }
-                    case 'F': {
-                        float val = r.get_float(i);
+                    case 'D': {
+                        double val = r.get_double(i);
                         if (val > 30) {
                             containsGreaterThan30 = true;
                         }

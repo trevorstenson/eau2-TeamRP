@@ -15,7 +15,7 @@ public:
  
   /** Called for fields of the argument's type with the value of the field. */
   virtual void accept(bool b) { }
-  virtual void accept(float f) { }
+  virtual void accept(double d) { }
   virtual void accept(int i) { }
   virtual void accept(String* s) { }
  
@@ -40,8 +40,8 @@ class PrintFielder: public Fielder {
     void accept(bool b) {
       std::cout << "<" << b << ">";
     }
-    void accept(float f) { 
-      std::cout << "<" << f << ">";
+    void accept(double d) { 
+      std::cout << "<" << d << ">";
     }
     void accept(int i) {
       std::cout << "<" << i << ">";
@@ -62,8 +62,8 @@ class SorPrintFielder: public Fielder {
     void accept(bool b) {
       std::cout << "<" << b << ">";
     }
-    void accept(float f) { 
-      std::cout << "<" << f << ">";
+    void accept(double d) { 
+      std::cout << "<" << d << ">";
     }
     void accept(int i) {
       std::cout << "<" << i << ">";

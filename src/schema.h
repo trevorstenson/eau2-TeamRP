@@ -79,7 +79,7 @@ class Schema : public Object {
           row_names[i] = nullptr;
         }
       } else {
-        assert("Cannot instantiate types other than B, I, F, or S." && false);
+        assert("Cannot instantiate types other than B, I, D, or S." && false);
       }
     }
 
@@ -106,7 +106,7 @@ class Schema : public Object {
      /** Ensures the char is one of B, I, F, and S, representing
      *  boolean, integer, float, or string type. **/
     bool isValidType(const char type) {
-      return (type == 'B' || type == 'I' || type == 'F' || type == 'S');
+      return (type == 'B' || type == 'I' || type == 'D' || type == 'S');
     }
   
     /** Add a column of the given type and name (can be nullptr), name
@@ -114,7 +114,7 @@ class Schema : public Object {
       * in undefined behavior. */
     void add_column(char typ, String* name) {
       if (!isValidType(typ)) {
-        assert("Cannot instantiate types other than B, I, F, or S." && false);
+        assert("Cannot instantiate types other than B, I, D, or S." && false);
       }
       ensureColumnCapacity();
       types[n_col] = typ;
@@ -278,7 +278,13 @@ class Schema : public Object {
     }
 
     ~Schema() {
-      delete types;
+      delete[] types;
+      for (size_t i = 0; i < n_col; i++) {
+        delete col_names[i];
+      }
+      for (size_t j = 0; j < n_row; j++) {
+        delete row_names[j];
+      }
       delete[] col_names;
       delete[] row_names;
     }

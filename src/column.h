@@ -9,7 +9,7 @@
 
 class IntColumn;
 class BoolColumn;
-class FloatColumn;
+class DoubleColumn;
 class StringColumn;
 
 using namespace std;
@@ -38,7 +38,7 @@ class Column : public Object {
   virtual BoolColumn*  as_bool() {
     return nullptr;
   }
-  virtual FloatColumn* as_float() {
+  virtual DoubleColumn* as_double() {
     return nullptr;
   }
   virtual StringColumn* as_string() {
@@ -53,7 +53,7 @@ class Column : public Object {
   virtual void push_back(bool val) {
     assert("Invalid operation." && false);
   }
-  virtual void push_back(float val) {
+  virtual void push_back(double val) {
     assert("Invalid operation." && false);
   }
   virtual void push_back(String* val) {
@@ -71,7 +71,7 @@ class Column : public Object {
  /** Returns the number of elements in the column. */
   virtual size_t size() {}
  
-  /** Return the type of this column as a char: 'S', 'B', 'I' and 'F'.*/
+  /** Return the type of this column as a char: 'S', 'B', 'I' and 'D'.*/
   char get_type() {
     assert(type != NULL);
     return type;
@@ -153,7 +153,7 @@ class IntColumn : public Column {
     vals_[getParentIndex(idx)][getChildIndex(idx)] = val;
   }
 
-  void push_back(float val) {
+  void push_back(double val) {
     ensureSubArray(len_);
     vals_[getParentIndex(len_)][getChildIndex(len_)] = val;
     len_++;
@@ -204,6 +204,9 @@ class IntColumn : public Column {
   }
 
   ~IntColumn() {
+    for (size_t i = 0; i < len_; i++) {
+      delete[] vals_[i];
+    }
     delete[] vals_;
   }
 };
@@ -331,32 +334,35 @@ class BoolColumn : public Column {
   }
 
   ~BoolColumn() {
+    for (size_t i = 0; i < len_; i++) {
+      delete[] vals_[i];
+    }
     delete[] vals_;
   }
 };
 
 /*************************************************************************
- * FloatColumn::
- * Holds float values.
+ * DoubleColumn::
+ * Holds double values.
  */
-class FloatColumn : public Column {
+class DoubleColumn : public Column {
  public:
-    float** vals_;
+    double** vals_;
 
-  FloatColumn() {
-    type = 'F';
+  DoubleColumn() {
+    type = 'D';
     len_ = 0;
-    vals_ = new float*[20];
+    vals_ = new double*[20];
     for (int i = 0; i < 20; i++) {
       vals_[i] = nullptr;
     }
   }
 
-  FloatColumn(int n, ...) {
-    type = 'F';
+  DoubleColumn(int n, ...) {
+    type = 'D';
     va_list arguments;
     len_ = n;
-    vals_ = new float*[20];
+    vals_ = new double*[20];
     for (int i = 0; i < 20; i++) {
       vals_[i] = nullptr;
     }
@@ -364,7 +370,7 @@ class FloatColumn : public Column {
     va_start(arguments, n);
     for (int i = 0; i < n; i++) {
       ensureSubArray(i);
-      float val = va_arg(arguments, double);
+      double val = va_arg(arguments, double);
       size_t parentIndex = getParentIndex(i);
       int subIndex = getChildIndex(i);
       vals_[parentIndex][subIndex] = val;
@@ -377,22 +383,22 @@ class FloatColumn : public Column {
     size_t arrayIndex = getParentIndex(idx);
     if (vals_[arrayIndex] == nullptr) {
       int count = (int)pow(2, arrayIndex);
-      vals_[arrayIndex] = new float[count];
+      vals_[arrayIndex] = new double[count];
     }
   }
 
   /** Gets value at idx*/
-  float get(size_t idx) {
+  double get(size_t idx) {
     ensureSubArray(idx);
     return vals_[getParentIndex(idx)][getChildIndex(idx)];
   }
 
-  FloatColumn* as_float() {
+  DoubleColumn* as_double() {
     return this;
   }
 
   /** Set value at idx. An out of bound idx is undefined.  */
-  void set(size_t idx, float val) {
+  void set(size_t idx, double val) {
     ensureSubArray(idx);
     if (idx >= len_) {
       for (size_t i = len_; i < idx; i++) {
@@ -404,7 +410,7 @@ class FloatColumn : public Column {
     vals_[getParentIndex(idx)][getChildIndex(idx)] = val;
   }
 
-  void push_back(float val) {
+  void push_back(double val) {
     ensureSubArray(len_);
     vals_[getParentIndex(len_)][getChildIndex(len_)] = val;
     len_++;
@@ -414,8 +420,8 @@ class FloatColumn : public Column {
     return len_;
   }
 
-  FloatColumn* clone() {
-    FloatColumn* newColumn = new FloatColumn();
+  DoubleColumn* clone() {
+    DoubleColumn* newColumn = new DoubleColumn();
     for (size_t i = 0; i < len_; i++) {
       newColumn->push_back(vals_[getParentIndex(i)][getChildIndex(i)]);
     }
@@ -424,7 +430,7 @@ class FloatColumn : public Column {
 
   void print(size_t i) {
     if (i < len_) {
-      float outVal = vals_[getParentIndex(i)][getChildIndex(i)];
+      double outVal = vals_[getParentIndex(i)][getChildIndex(i)];
       if (outVal != NULL) {
         std::cout << outVal;
       }
@@ -433,7 +439,7 @@ class FloatColumn : public Column {
 
   void print() {
     for (size_t i = 0; i < len_; i++) {
-      float outVal = vals_[getParentIndex(i)][getChildIndex(i)];
+      double outVal = vals_[getParentIndex(i)][getChildIndex(i)];
       if (outVal != NULL) {
         std::cout << outVal << std::endl;
       } else {
@@ -444,7 +450,7 @@ class FloatColumn : public Column {
 
   bool equals(Object  * other) {
     if (this == other) return true;
-    FloatColumn* otherCol = dynamic_cast<FloatColumn*>(other);
+    DoubleColumn* otherCol = dynamic_cast<DoubleColumn*>(other);
     if (otherCol == nullptr) return false;
     if (size() != otherCol->size()) return false;
     for (size_t i = 0; i < size(); i++) {
@@ -453,7 +459,10 @@ class FloatColumn : public Column {
     return true;
   }
 
-  ~FloatColumn() {
+  ~DoubleColumn() {
+    for (size_t i = 0; i < len_; i++) {
+      delete[] vals_[i];
+    }
     delete[] vals_;
   }
 };
@@ -578,6 +587,9 @@ class StringColumn : public Column {
   }
 
   ~StringColumn() {
+    for (size_t i = 0; i < len_; i++) {
+      delete[] vals_[i];
+    }
     delete[] vals_;
   }
 };

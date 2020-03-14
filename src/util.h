@@ -21,15 +21,15 @@ int parse_int(string value) {
 }
 
 /**
- * Convenience wrapper around stof, returns a float from a string
+ * Convenience wrapper around stod, returns a double from a string
  * @param s The string to be parsed
- * @return parsed float
+ * @return parsed double
  */
-float parse_float(string value) {
+double parse_double(string value) {
     if (value == "") {
         return NULL;
     } else {
-        return stof(value);
+        return stod(value);
     }
 }
 
@@ -81,17 +81,17 @@ bool is_int(string value) {
 }
 
 /**
- * Is the string is a float
+ * Is the string is a double
  * @param s The string to be evaluated
- * @return bool if the string is a float
+ * @return bool if the string is a double
  */
-bool is_float(string value) {
+bool is_double(string value) {
     if (value.find("\"")  != string::npos) {
         return false;
     } else {
-        string floatPattern(R"(^(?: *)(?:\+|\-|)(\d+).(\d+))");
-        regex floatRegex(floatPattern);
-        return regex_match(value, floatRegex);
+        string doublePattern(R"(^(?: *)(?:\+|\-|)(\d+).(\d+))");
+        regex doubleRegex(doublePattern);
+        return regex_match(value, doubleRegex);
     }
 }
 
@@ -158,7 +158,7 @@ Type get_field_type(string fieldValue) {
     trim_whitespace(fieldValue);
     if (is_bool(fieldValue)) return BOOL;
     if (is_int(fieldValue)) return INT;
-    if (is_float(fieldValue)) return FLOAT;
+    if (is_double(fieldValue)) return DOUBLE;
     if (is_string(fieldValue)) return STRING;
     return BOOL;
 }
@@ -186,8 +186,8 @@ Type map_to_type(char type) {
         case 'S':
             return STRING;
             break;
-        case 'F':
-            return FLOAT;
+        case 'D':
+            return DOUBLE;
             break;
         case 'I':
             return INT;
@@ -209,8 +209,8 @@ char map_to_char(Type type) {
             return 'B';
         case STRING:
             return 'S';
-        case FLOAT:
-            return 'F';
+        case DOUBLE:
+            return 'D';
         case INT:
             return 'I';
         default:

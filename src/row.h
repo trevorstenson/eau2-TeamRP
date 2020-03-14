@@ -46,13 +46,13 @@ class Row : public Object {
     }
   }
 
-  void set(size_t col, float val) {
-    if (schema_->col_type(col) == 'F') {
+  void set(size_t col, double val) {
+    if (schema_->col_type(col) == 'D') {
       if (columns_[col] != nullptr) {
         delete columns_[col];
       }
-      columns_[col] = new FloatColumn();
-      columns_[col]->as_float()->set(0, val);
+      columns_[col] = new DoubleColumn();
+      columns_[col]->as_double()->set(0, val);
     } else {
       assert("Wrong column type for given value." && false);
     }
@@ -86,7 +86,6 @@ class Row : public Object {
   /** Set/get the index of this row (ie. its position in the dataframe. This is
    *  only used for informational purposes, unused otherwise */
   void set_idx(size_t idx) {
-    //std::cout << "idx: " << idx << std::endl;
     idx_ = idx;
   }
   size_t get_idx() {
@@ -98,7 +97,6 @@ class Row : public Object {
   int get_int(size_t col) {
     if (schema_->col_type(col) == 'I') {
       if (columns_[col]->get_type() == 'I') {
-        //IntColumn* intCol = dynamic_cast<IntColumn*>(columns_[col]);
         return columns_[col]->as_int()->get(0);
       }
     }
@@ -108,18 +106,16 @@ class Row : public Object {
   bool get_bool(size_t col) {
     if (schema_->col_type(col) == 'B') {
       if (columns_[col]->get_type() == 'B') {
-        //BoolColumn* boolCol = dynamic_cast<BoolColumn*>(columns_[col]);
         return columns_[col]->as_bool()->get(0);
       }
     }
     assert("Wrong type. Program terminated." && false);
   }
 
-  float get_float(size_t col) {
-    if (schema_->col_type(col) == 'F') {
-      if (columns_[col]->get_type() == 'F') {
-        //FloatColumn* floatCol = dynamic_cast<FloatColumn*>(columns_[col]);
-        return columns_[col]->as_float()->get(0);
+  double get_double(size_t col) {
+    if (schema_->col_type(col) == 'D') {
+      if (columns_[col]->get_type() == 'D') {
+        return columns_[col]->as_double()->get(0);
       }
     }
     assert("Wrong type. Program terminated." && false);
@@ -168,8 +164,8 @@ class Row : public Object {
             f.accept(bCol->get(0));
             break;
           }
-          case 'F': {
-            FloatColumn* fCol = columns_[i]->as_float();
+          case 'D': {
+            DoubleColumn* fCol = columns_[i]->as_double();
             f.accept(fCol->get(0));
             break;
           }
