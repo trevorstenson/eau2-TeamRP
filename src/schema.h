@@ -86,14 +86,14 @@ class Schema : public Object {
     /** Returns char representing column type at idx.
      * Invalid idx exits */
     char type(size_t idx) {
-      if (idx >= strlen(types)) {
+      if (idx >= col_cap) {
         assert("Index out of bounds." && false);
       }
       return types[idx];
     }
 
     /** Ensures the char* contains only B, I, F, and S, representing
-     *  boolean, integer, float, and string types. **/
+     *  boolean, integer, double, and string types. **/
     bool containsValidTypes(const char* types) {
       for (int i = 0; i < strlen(types); i++) {
         if (!isValidType(types[i])) {
@@ -104,7 +104,7 @@ class Schema : public Object {
     }
 
      /** Ensures the char is one of B, I, F, and S, representing
-     *  boolean, integer, float, or string type. **/
+     *  boolean, integer, double, or string type. **/
     bool isValidType(const char type) {
       return (type == 'B' || type == 'I' || type == 'D' || type == 'S');
     }

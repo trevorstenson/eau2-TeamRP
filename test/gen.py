@@ -9,12 +9,12 @@ def randomString(stringLength=10):
     return ''.join(random.choice(letters) for i in range(stringLength))
 
 def makeTestFile(rows, cols):
-    print("Generating " + str(rows) + " line file with " + str(cols) + " columnss")
+    print("Generating " + str(rows) + " line file with " + str(cols) + " columns")
     dir_path = os.getcwd()
     os.makedirs(dir_path, exist_ok=True)
     idx = 0
     random.seed(1)
-    f = open(dir_path+"/test"+str(rows)+".sor", "w")
+    f = open(os.path.join(dir_path+"/test", "test"+str(rows)+".sor"), "w")
     for i in range(rows):
         for j in range(cols):
             if j == 0 or j == 4 or j == 8:

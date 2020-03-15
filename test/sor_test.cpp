@@ -7,11 +7,11 @@ void sor_adapter() {
     SorAdapter* sor = new SorAdapter(0, UINT32_MAX, "test1000.sor");
     DataFrame* df = sor->df_;
     //Checking the schema is correct
-    assert(strcmp(df->get_schema().types, "BFSIBFSIBF") == 0);
+    assert(strcmp(df->get_schema().types, "BDSIBDSIBD") == 0);
     //Checking the data is correct
-    assert(df->get_double(1, 0) == 0.01f);
-    assert(df->get_double(9, 999) == 99.99f);
-    assert(df->get_double(5, 570) == 57.05f);
+    assert(df->get_double(1, 0) == 0.01);
+    assert(df->get_double(9, 999) == 99.99);
+    assert(df->get_double(5, 570) == 57.05);
     assert(df->get_int(3, 365) == 3653);
     assert(df->get_int(7, 723) == 7237);
     assert(df->get_bool(0, 747) == true);

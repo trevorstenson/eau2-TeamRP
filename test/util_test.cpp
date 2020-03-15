@@ -9,9 +9,9 @@ void parse_test() {
     string int_str_2 = string("00");
     assert(parse_int(int_str_2) == 0);
     string float_str = string("123.321");
-    assert(parse_double(float_str) == 123.321f);
+    assert(parse_double(float_str) == 123.321);
     string float_str_2 = string("34.967");
-    assert(parse_double(float_str_2) == 34.967f);
+    assert(parse_double(float_str_2) == 34.967);
     string bool_str = string("1");
     assert(parse_bool(bool_str) == true);
     string bool_str_2 = string("0");
