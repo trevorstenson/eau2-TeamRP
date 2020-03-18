@@ -5,6 +5,7 @@
 #include "row.h"
 #include "rower.h"
 #include "schema.h"
+#include "store/kvstore.h"
 #include <thread>
 #include <mutex>
 #include <functional>
@@ -410,6 +411,10 @@ class DataFrame : public Object {
       }
     }
     return newDataFrame;
+  }
+
+  static DataFrame* fromArray(Key* key, KVStore* kv, size_t size, double* array) {
+    return nullptr;
   }
  
   /** Print the dataframe in SoR format to standard output. */
