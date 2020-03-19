@@ -25,10 +25,13 @@
 //class representing a Node within our network
 class Node : public Object {
     public:
+        // Node's IP and port
         String* ip_;
         size_t port_;
+        // Server's IP and port
         String* serverIp_;
         size_t serverPort_;
+        // FDs for sending to neighbor sockets
         int* neighborSockets;
         Directory* nodeDir;
         int serverSocket_;
@@ -46,7 +49,6 @@ class Node : public Object {
             serverIp_ = new String(serverIp);
             port_ = port;
             serverPort_ = serverPort;
-            nodeDir = new Directory(TEMP_CLIENTS_MAX);
             serverBuffer = new unsigned char[BUFF_SIZE];
             neighborBuffer = new unsigned char[BUFF_SIZE];
             memset(serverBuffer, 0, BUFF_SIZE);
@@ -95,7 +97,7 @@ class Node : public Object {
             sendToServer(getRegistrationMessage());
             //launch thread to listen to neighbors
             listenToNeighborsThread = new std::thread(&Node::listenToNeighbors, this);
-            while(true) {
+            while(running) {
 
             }
         }
@@ -107,7 +109,7 @@ class Node : public Object {
             if (clientSocket_ < 0) {
                 assert("Error creating socket." && false);
             }
-
+            //Allows multiple connections on a socker
             if( setsockopt(clientSocket_, SOL_SOCKET, SO_REUSEADDR, (char*)&opt, sizeof(opt)) < 0) {
                 assert("Error allowing multiple connections." && false);
             }
@@ -117,14 +119,16 @@ class Node : public Object {
             clientaddr.sin_port = htons(port_);
 
             //bind to user provided client port for listening to neighbors
-            if (bind(clientSocket_, (struct sockaddr *)&clientaddr, sizeof(clientaddr))<0) { 
+            if (bind(clientSocket_, (struct sockaddr *)&clientaddr, sizeof(clientaddr)) < 0) { 
                 assert("Error binding client socket." && false);
             }
 
+            //Attempt to make non-blocking
             if (ioctl(clientSocket_, FIONBIO, (char*)&opt) < 0) {
                 assert("Failure setting to nonblocking." && false);
             }
 
+            //Setup to listen to other nodes
             if (listen(clientSocket_, TEMP_CLIENTS_MAX - 1) < 0) {
                 assert("Failed to listen." && false);
             }
@@ -188,6 +192,9 @@ class Node : public Object {
                     handleStatus(fd, msg);
                     break;
                 }
+                default: {
+                    assert("Unrecognized message" && false);
+                }
             }
         }
 
@@ -219,6 +226,7 @@ class Node : public Object {
         void handleStatus(int fd, unsigned char* msg) {
             Status* incomingStatus = new Status(msg);
             pln(incomingStatus->msg_->c_str());
+            delete incomingStatus;
         }
 
         //listens to the server for directory updates
@@ -287,7 +295,7 @@ class Node : public Object {
             greetAllNeighbors();
         }
 
-        //creates connections with all other nodes in the node directory
+        //Creates connections with all other nodes in the node directory
         void createNeighborConnections() {
             for (int i = 0; i < nodeDir->ports_len_; i++) {
                 if (!(nodeDir->addresses->vals_[i]->equals(ip_) && nodeDir->ports[i] == port_)) {
@@ -307,6 +315,7 @@ class Node : public Object {
         }
 
         //greets all neighbors within the node directory with a status message
+        //Proof of concept for MVP
         void greetAllNeighbors() {
             for (int i = 0; i < nodeDir->ports_len_; i++) {
                 if (neighborSockets[i] != NULL) {
@@ -330,6 +339,9 @@ class Node : public Object {
                     pln("Successfully registered!");
                     break;
                 }
+                default: {
+                    assert("Not implemented yet" && false);
+                }
             }
         }
 
@@ -339,6 +351,9 @@ class Node : public Object {
                 case MsgKind::Register: {
                     assert("Registration failed." && false);
                     break;
+                }
+                default: {
+                    assert("Not implemented yet" && false);
                 }
             }
         }

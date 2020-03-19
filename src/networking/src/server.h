@@ -80,7 +80,7 @@ class Server : public Object {
             p("Listening on port ").pln(serverPort_);
         }
 
-        //initializes and starts the listening process for node connections
+        //Initializes and starts the listening process for node connections
         void start() {
             initialize();
             running = true;
@@ -89,6 +89,7 @@ class Server : public Object {
 
             while(running) {
                 readfds = currentfds;
+                //Waits for activity on the socket
                 if (select(FD_SETSIZE, &readfds, NULL, NULL, NULL) < 0) {
                     assert("Error selecting." && false);
                 }
@@ -147,6 +148,9 @@ class Server : public Object {
                 case MsgKind::Register: {
                     handleRegistration(fd, msg);
                     break;
+                }
+                default: {
+                    assert("Unrecognized message type" && false);
                 }
             }
             nodeDir->print();
