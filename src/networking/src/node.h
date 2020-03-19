@@ -100,7 +100,6 @@ class Node : public Object {
             running = true;
             listenToServerThread = new std::thread(&Node::listenToServer, this);
             sendToServer(getRegistrationMessage());
-            //while(running) { }
         }
 
         //initializes peer to peer listening for other Nodes

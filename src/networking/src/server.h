@@ -55,7 +55,6 @@ class Server : public Object {
         //launches a new thread that starts the server
         void serve() {
             updateThread = new std::thread(&Server::start, this);
-            //while (running) {}
         }
 
         //initializes the master_socket that all node traffic comes through
