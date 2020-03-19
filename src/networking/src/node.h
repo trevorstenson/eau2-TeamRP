@@ -13,8 +13,8 @@
 #include "assert.h"
 #include "../../object.h"
 #include "../../string.h"
-#include "../../part2/src/message.h"
-#include "../../part2/src/serial.h"
+#include "../../serial/src/message.h"
+#include "../../serial/src/serial.h"
 #include <thread>
 #include <functional>
 #include <mutex>
