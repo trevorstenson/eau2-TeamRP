@@ -6,6 +6,8 @@
 #include "rower.h"
 #include "schema.h"
 #include "store/kvstore.h"
+#include "serial/src/serial.h"
+#include "serial/src/array.h"
 #include <thread>
 #include <mutex>
 #include <functional>
@@ -23,7 +25,7 @@
  * Canon Sawrey sawrey.c@husky.neu.edu
  * Trevor Stenson stenson.t@husky.neu.edu
  */
-class DataFrame : public Object {
+class DataFrame : public Object, public Serializable {
  public:
   Schema* schema;
   size_t col_cap;
@@ -35,12 +37,6 @@ class DataFrame : public Object {
     schema = newSchema;
     col_cap = df.col_cap;
     columns = new Column*[col_cap];
-    for (size_t i = 0; i < ncols(); i++) {
-      String* temp = df.schema->col_names[i];
-      if (temp != nullptr) {
-        schema->col_names[i] = temp->clone();
-      }
-    } 
     for (int i = 0; i < schema->width(); i++) {
       switch (schema->type(i)) {
         case 'B':
@@ -67,13 +63,6 @@ class DataFrame : public Object {
     schema = &schema_;
     col_cap = schema->col_cap;
     columns = new Column*[col_cap];
-    for (size_t i = 0; i < ncols(); i++) {
-      String* temp = schema->col_names[i];
-      if (temp != nullptr) {
-        schema->col_names[i] = temp->clone();
-      }
-      delete temp;
-    }
     for (int i = 0; i < schema->width(); i++) {
       switch (schema->type(i)) {
         case 'B':
@@ -92,6 +81,10 @@ class DataFrame : public Object {
           assert("Type other than B, I, F, or S found." && false);
       }
     }
+  }
+
+  DataFrame(unsigned char* serial) {
+    deserialize(serial);
   }
  
   /** Returns the dataframe's schema. Modifying the schema after a dataframe
@@ -129,7 +122,7 @@ class DataFrame : public Object {
     }
     ensureColumnCapacity();
     columns[schema->width()] = addCol;
-    schema->ensure_length(addCol->size());
+    schema->new_length(addCol->size());
     schema->add_column(col->get_type(), name);
   }
 
@@ -176,24 +169,12 @@ class DataFrame : public Object {
     return columns[col]->as_string()->get(row);
   }
  
-  /** Return the offset of the given column name or -1 if no such col. */
-  int get_col(String& col) {
-    char* characters = col.c_str();
-    return schema->col_idx(characters);
-  }
- 
-  /** Return the offset of the given row name or -1 if no such row. */
-  int get_row(String& row) {
-    char* characters = row.c_str();
-    return schema->row_idx(characters);
-  }
- 
   /** Set the value at the given column and row to the given value.
     * If the column is not  of the right type or the indices are out of
     * bound, the result is undefined. */
   void set(size_t col, size_t row, int val) {
     checkIndices(col, row, 'I');
-    schema->ensure_length(row);
+    schema->new_length(row);
     IntColumn* column = columns[col]->as_int();
     if (!column) {
       assert("Unable to cast as IntColumn." && false);
@@ -203,7 +184,7 @@ class DataFrame : public Object {
   }
   void set(size_t col, size_t row, bool val) {
     checkIndices(col, row, 'B');
-    schema->ensure_length(row);
+    schema->new_length(row);
     BoolColumn* column = columns[col]->as_bool();
     if (!column) {
       assert("Unable to cast as BoolColumn." && false);
@@ -213,7 +194,7 @@ class DataFrame : public Object {
   }
   void set(size_t col, size_t row, double val){
     checkIndices(col, row, 'D');
-    schema->ensure_length(row);
+    schema->new_length(row);
     DoubleColumn* column = columns[col]->as_double();
     if (!column) {
       assert("Unable to cast as DoubleColumn." && false);
@@ -223,7 +204,7 @@ class DataFrame : public Object {
   }
   void set(size_t col, size_t row, String* val) {
     checkIndices(col, row, 'S');
-    schema->ensure_length(row);
+    schema->new_length(row);
     StringColumn* column = columns[col]->as_string();
     if (!column) {
       assert("Unable to cast as StringColumn." && false);
@@ -292,7 +273,7 @@ class DataFrame : public Object {
       assert("Incorrect row schema." && false);
     } else {
       //Update schema to know the number of rows - use idx + 1 to get length
-      schema->ensure_length(idx);
+      schema->new_length(idx);
       //Load data into columns
       for (size_t i = 0; i < row.width(); i++) {
         char type = schema->type(i);
@@ -431,6 +412,17 @@ class DataFrame : public Object {
     }
   }
 
+  bool equals(Object  * other) { 
+    if (other == this) return true;
+    DataFrame* x = dynamic_cast<DataFrame *>(other);
+    if (x == nullptr) return false;
+    if (!schema->equals(x->schema)) return false;
+    for (int i = 0; i < ncols(); i++) {
+      if (!columns[i]->equals(x->columns[i])) return false;
+    }
+    return true;
+  }
+
   /** Convenience printing method for debugging. */
   void debug_print() {
     cout << endl << "-----------SCHEMA-----------" << endl;
@@ -440,6 +432,108 @@ class DataFrame : public Object {
     print();
     cout << endl << "---------END SoR---------" << endl;
   }
+
+  unsigned char* serialize() { 
+    size_t buffer_length = 100;
+    unsigned char* serial = new unsigned char[buffer_length];
+    unsigned char* schm = schema->serialize();
+    size_t index = 16 + schema->width() + 1;
+    copy_unsigned(serial, schm, index);
+    for (size_t i = 0; i < schema->width(); i++) {
+      if (schema->type(i) == 'S') {
+        StringArray* stra = new StringArray(columns[i]);
+        unsigned char* temp = stra->serialize();
+        size_t length = extract_size_t(temp, 0);
+
+        while (index + length >= buffer_length - 1) {
+          unsigned char* temp = new unsigned char[buffer_length * 2];
+          copy_unsigned(temp, serial, buffer_length);
+          buffer_length *= 2;
+          delete[] serial;
+          serial = temp;
+        }
+
+        copy_unsigned(serial + index, temp, length);
+        delete[] temp;
+        index += length;
+      } else {
+        DoubleArray* dbl = new DoubleArray(columns[i]);
+        unsigned char* temp = dbl->serialize();
+        size_t length = extract_size_t(temp, 0);
+
+        while (index + length >= buffer_length - 1) {
+          unsigned char* temp = new unsigned char[buffer_length * 2];
+          copy_unsigned(temp, serial, buffer_length);
+          buffer_length *= 2;
+          delete[] serial;
+          serial = temp;
+        }
+
+        copy_unsigned(serial + index, temp, length);
+        delete[] temp;
+        index += length;
+      }
+    }
+    return serial;
+  }
+  
+  size_t deserialize(unsigned char* serialized) {
+    schema = new Schema(serialized);
+    col_cap = schema->col_cap;
+    columns = new Column*[col_cap];
+    size_t index = 16 + schema->width() + 1;
+
+    DoubleArray* dbl;
+    StringArray* str;
+
+    for (int i = 0; i < schema->width(); i++) {
+      switch (schema->type(i)) {
+        case 'B':
+          columns[i] = new BoolColumn();
+          dbl = new DoubleArray();
+          index += dbl->deserialize(serialized + index);
+          for (size_t j = 0; j < dbl->len_; j++) {
+            if (dbl->vals_[j] == 0) {
+              set(i, j, false);
+            } else {
+              set(i, j, true);
+            }
+          }
+          delete dbl;
+          break;
+        case 'I':
+          columns[i] = new IntColumn();
+          dbl = new DoubleArray();
+          index += dbl->deserialize(serialized + index);
+          for (size_t j = 0; j < dbl->len_; j++) {
+            set(i, j, int(dbl->vals_[j]));
+          }
+          delete dbl;
+          break;
+        case 'S':
+          columns[i] = new StringColumn();
+          str = new StringArray();
+          index += str->deserialize(serialized + index);
+          for (size_t j = 0; j < str->len_; j++) {
+            set(i, j, str->vals_[j]->clone());
+          }
+          delete str;
+          break;
+        case 'D':
+          columns[i] = new DoubleColumn();
+          dbl = new DoubleArray();
+          index += dbl->deserialize(serialized + index);
+          for (size_t j = 0; j < dbl->len_; j++) {
+            set(i, j, dbl->vals_[j]);
+          }
+          delete dbl;
+          break;
+        default:
+          assert("Type other than B, I, F, or S found." && false);
+      }
+    }
+    return index;
+  };
 
   ~DataFrame() {
     delete[] columns;

@@ -38,11 +38,12 @@ class Message : public Object, public Serializable  {
         }
 
         /** Deserialize, mutating this object to match the buffer */
-        void deserialize(unsigned char* buffer) {
+        size_t deserialize(unsigned char* buffer) {
             kind_ = extract_msg_kind(buffer, 0);
             sender_ = extract_size_t(buffer, 1);
             target_ = extract_size_t(buffer, 9);
             id_ = extract_size_t(buffer, 17);
+            return 25;
         }
 
         bool equals(Object* other) {
@@ -85,16 +86,17 @@ class Ack : public Message {
             unsigned char* buffer = new unsigned char[34];
             insert_size_t(34, buffer, 0);
             unsigned char* temp_buffer = Message::serialize();
-            copy(buffer + 8, temp_buffer, 25);
+            copy_unsigned(buffer + 8, temp_buffer, 25);
             delete temp_buffer;
             buffer[33] = serialize_msg_kind(previous_kind);
             return buffer;
         }
 
         /** Deserialize, mutating this object to match the buffer */
-        void deserialize(unsigned char* buffer) {
-            Message::deserialize(buffer + 8);
+        size_t deserialize(unsigned char* buffer) {
+            size_t msg_size = Message::deserialize(buffer + 8);
             previous_kind = extract_msg_kind(buffer, 33);
+            return extract_size_t(buffer, 0);
         }
 
         bool equals(Object* other) {
@@ -136,16 +138,17 @@ class Nack : public Message {
             unsigned char* buffer = new unsigned char[34];
             insert_size_t(34, buffer, 0);
             unsigned char* temp_buffer = Message::serialize();
-            copy(buffer + 8, temp_buffer, 25);
+            copy_unsigned(buffer + 8, temp_buffer, 25);
             delete temp_buffer;
             buffer[33] = serialize_msg_kind(previous_kind);
             return buffer;
         }
 
         /** Deserialize, mutating this object to match the buffer */
-        void deserialize(unsigned char* buffer) {
-            Message::deserialize(buffer + 8);
+        size_t deserialize(unsigned char* buffer) {
+            size_t msg_size = Message::deserialize(buffer + 8);
             previous_kind = extract_msg_kind(buffer, 33);
+            return extract_size_t(buffer, 0);;
         }
 
         bool equals(Object* other) {
@@ -175,21 +178,22 @@ class Kill : public Message {
         }
 
         /** Serializes this Ack, structure is as follows:
-         * |--8 bytes------|--25 bytes----------|--1 byte---------|
-         * |--Total bytes--|--Message data------|--previous_type--|
+         * |--8 bytes------|--25 bytes----------|
+         * |--Total bytes--|--Message data------|
          */
         unsigned char* serialize() {
             unsigned char* buffer = new unsigned char[33];
             insert_size_t(33, buffer, 0);
             unsigned char* temp_buffer = Message::serialize();
-            copy(buffer + 8, temp_buffer, 25);
+            copy_unsigned(buffer + 8, temp_buffer, 25);
             delete temp_buffer;
             return buffer;
         }
 
         /** Deserialize, mutating this object to match the buffer */
-        void deserialize(unsigned char* buffer) {
-            Message::deserialize(buffer + 8);
+        size_t deserialize(unsigned char* buffer) {
+            size_t msg_size = Message::deserialize(buffer + 8);
+            return extract_size_t(buffer, 0);;
         }
 
         bool equals(Object* other) {
@@ -231,7 +235,7 @@ class Status : public Message {
             unsigned char* buffer = new unsigned char[length];
             insert_size_t(length, buffer, 0);
             unsigned char* temp_buffer = Message::serialize();
-            copy(buffer + 8, temp_buffer, 25);
+            copy_unsigned(buffer + 8, temp_buffer, 25);
             delete temp_buffer;
             insert_string(msg_, buffer, 33);
             buffer[length - 1] = '\0';
@@ -239,9 +243,10 @@ class Status : public Message {
         }
 
         /** Deserialize, mutating this object to match the buffer */
-        void deserialize(unsigned char* buffer) {
-            Message::deserialize(buffer + 8);
+        size_t deserialize(unsigned char* buffer) {
+            size_t msg_size = Message::deserialize(buffer + 8);
             msg_ = extract_string(buffer, 33);
+            return extract_size_t(buffer, 0);;
         }
 
         bool equals(Object* other) {
@@ -286,7 +291,7 @@ class Register : public Message {
             unsigned char* buffer = new unsigned char[length];
             insert_size_t(length, buffer, 0);
             unsigned char* temp_buffer = Message::serialize();
-            copy(buffer + 8, temp_buffer, 25);
+            copy_unsigned(buffer + 8, temp_buffer, 25);
             delete temp_buffer;
             insert_size_t(port, buffer, 33);
             insert_string(IP, buffer, 41);
@@ -295,10 +300,11 @@ class Register : public Message {
         }
 
         /** Deserialize, mutating this object to match the buffer */
-        void deserialize(unsigned char* buffer) {
-            Message::deserialize(buffer + 8);
+        size_t deserialize(unsigned char* buffer) {
+            size_t msg_size = Message::deserialize(buffer + 8);
             port = extract_size_t(buffer, 33);
             IP = extract_string(buffer, 41);
+            return extract_size_t(buffer, 0);;
         }
 
         bool equals(Object* other) {
@@ -404,7 +410,7 @@ class Directory : public Message {
             unsigned char* buffer = new unsigned char[length];
             insert_size_t(length, buffer, 0);
             unsigned char* temp_buffer = Message::serialize();
-            copy(buffer + 8, temp_buffer, 25);
+            copy_unsigned(buffer + 8, temp_buffer, 25);
             delete temp_buffer;
             insert_size_t(client, buffer, 33);
             insert_size_t(ports_len_, buffer, 41);
@@ -412,14 +418,13 @@ class Directory : public Message {
             for (size_t i = 0; i < ports_len_; i++)
                 insert_size_t(ports[i], buffer, 24 + 25 + 8 * i);
             //Copy in StringArray
-            copy(buffer + 24 + 25 + 8 * ports_len_, address, extract_size_t(address, 0));
-
+            copy_unsigned(buffer + 24 + 25 + 8 * ports_len_, address, extract_size_t(address, 0));
             return buffer;
         }
 
         /** Deserialize, mutating this object to match the buffer */
-        void deserialize(unsigned char* buffer) {
-            Message::deserialize(buffer + 8);
+        size_t deserialize(unsigned char* buffer) {
+            size_t msg_size = Message::deserialize(buffer + 8);
             client = extract_size_t(buffer, 8 + 25);
             ports_len_ = extract_size_t(buffer, 16 + 25);
             ports_cap_ = ports_len_ * 2;
@@ -427,7 +432,8 @@ class Directory : public Message {
             for (size_t i = 0; i < ports_len_; i++)
                 ports[i] = extract_size_t(buffer, 24 + 25 + 8 * i);
             addresses = new StringArray();
-            addresses->deserialize(buffer + 24 + 25 + 8 * ports_len_);
+            size_t arr_size = addresses->deserialize(buffer + 24 + 25 + 8 * ports_len_);
+            return extract_size_t(buffer, 0);
         }
 
         bool equals(Object* other) {
