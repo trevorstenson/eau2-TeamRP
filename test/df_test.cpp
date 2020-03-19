@@ -51,9 +51,7 @@ void integration_test() {
     assert(df->nrows() == 1000);
     assert(df->ncols() == 10);
     unsigned char* serial = df->serialize();
-    df->debug_print();
     DataFrame* df2 = new DataFrame(serial);
-    df2->debug_print();
     assert(df->equals(df2));
 
     cout << "---SOR - DataFrame - Serialization Integration passed---" << endl;
