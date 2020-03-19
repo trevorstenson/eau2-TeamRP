@@ -2,7 +2,7 @@
 #pragma once
 
 #include "string.h"
-
+#include "serial/src/serial.h"
 
 /*************************************************************************
  * Schema::
@@ -17,15 +17,12 @@
 
 using namespace std;
 
-class Schema : public Object {
+class Schema : public Object, public Serializable {
   public:
     size_t n_col;
     size_t n_row;
     size_t col_cap;
-    size_t row_cap;
     char* types;
-    String** col_names;
-    String** row_names;
 
 
     /** Copying constructor */
@@ -33,17 +30,8 @@ class Schema : public Object {
       n_col = from.n_col;
       n_row = from.n_row;
       col_cap = from.col_cap;
-      row_cap = from.row_cap;
       types = new char[col_cap];
       strcpy(types, from.types);
-      col_names = new String*[col_cap];
-      row_names = new String*[row_cap];
-      for (int i = 0; i < n_col; i++) {
-        col_names[i] = from.col_name(i);
-      }
-      for (int i = 0; i < n_row; i++) {
-        row_names[i] = from.row_name(i);
-      }
     }
   
     /** Create an empty schema **/
@@ -52,9 +40,10 @@ class Schema : public Object {
       n_row = 0;
       col_cap = 4;
       types = new char[col_cap];
-      col_names = new String*[col_cap];
-      row_cap = 4;
-      row_names = new String*[row_cap];
+    }
+
+    Schema(unsigned char* serial): Schema() {
+      deserialize(serial);
     }
   
     /** Create a schema from a string of types. A string that contains
@@ -68,16 +57,7 @@ class Schema : public Object {
         col_cap = capacity;
         types = new char[col_cap];
         strcpy(types, types_);
-        col_names = new String*[col_cap];
-        for (int i = 0; i < col_cap; i++) {
-          col_names[i] = nullptr;
-        }
         n_row = 0;
-        row_cap = 4;
-        row_names = new String*[row_cap];
-        for (int i = 0; i < row_cap; i++) {
-          row_names[i] = nullptr;
-        }
       } else {
         assert("Cannot instantiate types other than B, I, D, or S." && false);
       }
@@ -118,11 +98,6 @@ class Schema : public Object {
       }
       ensureColumnCapacity();
       types[n_col] = typ;
-      if (name != nullptr) {
-        col_names[n_col] = name->clone();
-      } else {
-        col_names[n_col] = nullptr;
-      }
       n_col++;
     }
 
@@ -144,69 +119,6 @@ class Schema : public Object {
       char* temp = types;
       types = new char[col_cap];
       strcpy(types, temp);
-      String** newValues = new String*[col_cap];
-      for (size_t i = 0; i < n_col; i++) {
-        newValues[i] = col_names[i];
-      }
-      delete[] col_names;
-      col_names = newValues;
-    }
-
-  
-    /** Add a row with a name (possibly nullptr), name is external.  Names are
-     *  expectd to be unique, duplicates result in undefined behavior. */
-    void add_row(String* name) { 
-      ensureRowCapacity();
-      if (name != nullptr) {
-        row_names[n_row] = name->clone();
-      } else {
-        row_names[n_row] = nullptr;
-      }
-      n_row++;
-    }
-
-
-    /** Ensures the current row capacity is enough to
-     * accomodate an addition */
-    void ensureRowCapacity() {
-      if (n_row == row_cap) {
-        growRows();
-      }
-    }
-
-    /** Increase row capacity and copies over old values */
-    void growRows() {
-      if (row_cap == 0) {
-        row_cap++;
-      } else {
-        row_cap *= 2;
-      }
-      String** newValues = new String*[row_cap];
-      for (size_t i = 0; i < n_row; i++) {
-        newValues[i] = row_names[i];
-      }
-      delete[] row_names;
-      row_names = newValues;
-    }
-  
-    /** Return name of row at idx; nullptr indicates no name. An idx >= width
-      * is undefined. */
-    String* row_name(size_t idx) {
-      if (idx >= n_row) {
-        assert("Index out of bounds." && false);
-      } else {
-        return row_names[idx];
-      } 
-    }
-  
-    /** Return name of column at idx; nullptr indicates no name given.
-      *  An idx >= width is undefined.*/
-    String* col_name(size_t idx) { 
-      if (idx >= n_col) {
-        assert("Index out of bounds." && false);
-      } else {
-        return col_names[idx];
-      }
     }
   
     /** Return type of column at idx. An idx >= width is undefined. */
@@ -216,28 +128,6 @@ class Schema : public Object {
       } else {
         return types[idx];
       }
-    }
-  
-    /** Given a column name return its index, or -1. */
-    int col_idx(const char* name) {
-      String* str = new String(name);
-      for (size_t i = 0; i < n_col; i++) {
-        if (str->equals(col_names[i])) {
-          return i;
-        }
-      }
-      return -1;
-    }
-  
-    /** Given a row name return its index, or -1. */
-    int row_idx(const char* name) {
-      String* str = new String(name);
-      for (size_t i = 0; i < n_row; i++) {
-        if (str->equals(row_names[i])) {
-          return i;
-        }
-      }
-      return -1;
     }
   
     /** The number of columns */
@@ -256,47 +146,18 @@ class Schema : public Object {
       cout << "n_row: " << n_row << endl;
       cout << "types: " << types << endl;
       cout << "col_cap: " << col_cap << endl;
-      cout << "row_cap: " << row_cap << endl;
-      cout << "col_names:\n";
-      for (int i = 0; i < n_col; i++) {
-        String* str = col_names[i];
-        if (str == nullptr) {
-          cout << pad_string("[NONE]", 10);
-        } else {
-          cout << pad_string(str->c_str(), 10);
-        }
-      }
-      cout << "\nrow_names:\n";
-      for (int i = 0; i < n_row; i++) {
-        String* str = row_names[i];
-        if (str == nullptr) {
-          cout << pad_string("[NONE]", 10);
-        } else {
-          cout << pad_string(str->c_str(), 10);
-        }
-      }
     }
 
     ~Schema() {
       delete[] types;
-      for (size_t i = 0; i < n_col; i++) {
-        delete col_names[i];
-      }
-      for (size_t j = 0; j < n_row; j++) {
-        delete row_names[j];
-      }
-      delete[] col_names;
-      delete[] row_names;
     }
 
     /**
      * Method to ensure the schema recognizes length as the schema's length
      * @param length the length of the ne
      */
-    void ensure_length(size_t row) {
-      for (int i = n_row; i <= row; i++) {
-        add_row(nullptr);
-      }
+    void new_length(size_t row) {
+      if (row >= length()) n_row = row + 1;
     }
 
     /**
@@ -314,5 +175,38 @@ class Schema : public Object {
         }
       }
       return ret_pointer;
+    }
+
+    bool equals(Object  * other) { 
+      if (other == this) return true;
+      Schema* x = dynamic_cast<Schema *>(other);
+      if (x == nullptr) return false;
+      if (width() != x->width() || length() != x->length()) return false;
+      return (strcmp(types, x->types) == 0);
+    }
+
+    /** Serializes the DoubleArray into an unsigned char array. Structure is as following
+         * 
+         * |--8 bytes--|--8 bytes-----|---Unknown----|
+         * |--n_row----|--n_col-------|---types------|
+    */
+    unsigned char* serialize() { 
+      unsigned char* buffer = new unsigned char[16 + width() + 1];
+      unsigned char* cast = reinterpret_cast<unsigned char*>(types);
+      insert_size_t(n_row, buffer, 0);
+      insert_size_t(n_col, buffer, 8);
+      insert_char_arr(types, buffer, 16, true);
+      return buffer;
+    }
+
+    size_t deserialize(unsigned char* serialized) { 
+      n_row = extract_size_t(serialized, 0);
+      size_t width = extract_size_t(serialized, 8);
+      char* temp = reinterpret_cast<char*>(serialized + 16);
+      for (size_t i = 0; i < width; i++) {
+        add_column(temp[i], nullptr);
+      }
+      assert(n_col == width);
+      return 16 + width + 1;
     }
 };

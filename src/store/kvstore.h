@@ -38,7 +38,7 @@ class KVStore : public Object  {
         Value* get(Key& k) {
             for (map<Key*, Value*>::iterator itr = kv_map_->begin(); itr != kv_map_->end(); ++itr) {
                 Key* key = itr->first;
-                if (key->equals(&k) return itr->second;
+                if (key->equals(&k)) return itr->second;
             }
             return nullptr;
         }

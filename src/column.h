@@ -77,6 +77,10 @@ class Column : public Object {
     return type;
   }
 
+  bool equals(Object * other) { 
+    assert("Should not be calling equals on abstract class" && false);
+  }
+
   /**Prints enmtire column */
   virtual void print() {}
 

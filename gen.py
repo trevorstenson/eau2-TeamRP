@@ -14,7 +14,7 @@ def makeTestFile(rows, cols):
     os.makedirs(dir_path, exist_ok=True)
     idx = 0
     random.seed(1)
-    f = open(os.path.join(dir_path+"/test", "test"+str(rows)+".sor"), "w")
+    f = open(os.path.join(dir_path, "test"+str(rows)+".sor"), "w")
     for i in range(rows):
         for j in range(cols):
             if j == 0 or j == 4 or j == 8:

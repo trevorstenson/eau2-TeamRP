@@ -2,12 +2,13 @@
 #pragma once 
 #include "../../string.h"
 #include "utils.h"
-#include "serial.h"
 
 class Serializable {
     public: 
+        /** Serializes the object */
         virtual unsigned char* serialize() { };
-        virtual void deserialize(unsigned char* serialized) { };
+        /** Deserializes the object. Note: returns number of bytes read */
+        virtual size_t deserialize(unsigned char* serialized) { }; 
 
         virtual ~Serializable() { };
 };
@@ -27,7 +28,7 @@ unsigned char* serialize_size_t(size_t s) {
 /** Insert the size_t into the buffer at a given offset */
 void insert_size_t(size_t s, unsigned char* buffer, size_t offset) {
     unsigned char* char_to_insert = serialize_size_t(s);
-    copy(buffer + offset, char_to_insert, 8);
+    copy_unsigned(buffer + offset, char_to_insert, 8);
     delete char_to_insert;
 }
 
@@ -57,7 +58,7 @@ unsigned char* serialize_double(double d) {
 /** Insert the size_t into the buffer at a given offset */
 void insert_double(double d, unsigned char* buffer, size_t offset) {
     unsigned char* char_to_insert = serialize_double(d);
-    copy(buffer + offset, char_to_insert, 8);
+    copy_unsigned(buffer + offset, char_to_insert, 8);
     delete char_to_insert;
 }
 
@@ -79,7 +80,7 @@ unsigned char* serialize_string(String* s) {
 size_t insert_string(String* s, unsigned char* buffer, size_t offset) {
     unsigned char* temp = serialize_string(s);
     size_t length = strlen(reinterpret_cast<char*>(temp));
-    copy(buffer + offset, temp, length);
+    copy_unsigned(buffer + offset, temp, length);
     return offset + length;
 }
 
@@ -90,6 +91,13 @@ String* extract_string(unsigned char* buffer, size_t offset) {
 
 String* deserialize_string(unsigned char* buffer) {
     return extract_string(buffer, 0);
+}
+
+void insert_char_arr(char* arr, unsigned char* buffer, size_t offset, bool include_null_term) {
+    unsigned char* temp = reinterpret_cast<unsigned char*>(strdup(arr));
+    size_t length = strlen(reinterpret_cast<char*>(temp));
+    copy_unsigned(buffer + offset, temp, length);
+    if (include_null_term) buffer[offset + length] = '\0';
 }
 
 //Stub out MsgKind to avoid circular dependencies

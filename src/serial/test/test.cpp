@@ -1,6 +1,7 @@
 #include "../src/array.h"
 #include "../src/message.h"
 #include "../src/serial.h"
+#include "../../dataframe.h"
 
 using namespace std;
 
@@ -91,24 +92,19 @@ void double_array_test() {
 }
 
 void string_array_test() {
-    StringArray* a = new StringArray(10);
-    a->push(new String("hello"));
-    a->push(new String("excellent"));
-    a->push(new String("string3"));
-    a->push(new String("dog"));
-    a->push(new String("cat"));
-    StringArray* b = new StringArray(10);
-    b->push(new String("hello"));
-    b->push(new String("excellent"));
-    b->push(new String("string3"));
-    b->push(new String("dog"));
-    b->push(new String("cas"));
+    StringArray* a = new StringArray(50);
+    for (size_t i = 0; i < 10; i++) {
+        a->push(new String("hello"));
+        a->push(new String("excellent"));
+        a->push(new String("string3"));
+        a->push(new String("dog"));
+        a->push(new String("cat"));
+    }
     unsigned char* a_serial = a->serialize();
-    StringArray* a_deserial = new StringArray();
+    StringArray* a_deserial = new StringArray(10);
     assert(!a->equals(a_deserial));
     a_deserial->deserialize(a_serial);
     assert(a->equals(a_deserial));
-    assert(!a->equals(b));
     cout << "*****   Passed: String Array   *****\n";
 }
 
@@ -285,6 +281,39 @@ void kill_test() {
     cout << "*****   Passed: Kill   *****\n";
 }
 
+void schema_test() {
+    Schema* schema = new Schema("BDBSISDBSDI");
+    schema->new_length(18);
+    unsigned char* serial = schema->serialize();
+    Schema* schema2 = new Schema(serial);
+    assert(schema->equals(schema2));
+
+    cout << "*****   Passed: Schema   *****\n";
+}
+
+void df_test() {
+    Schema* schema = new Schema("BDIS");
+    DataFrame* df = new DataFrame(*schema);
+    df->set(0, 0, true);
+    df->set(1, 0, 31.5);
+    df->set(2, 0, 54);
+    df->set(3, 0, new String("Hello"));
+    df->set(0, 1, true);
+    df->set(1, 1, 31231.5);
+    df->set(2, 1, 514);
+    df->set(3, 1, new String("Hello1"));
+    df->set(0, 2, false);
+    df->set(1, 2, 37.5);
+    df->set(2, 2, 5401);
+    df->set(3, 2, new String("Hello2"));
+    df->set(0, 3, false);
+    df->set(1, 3, 22.2);
+    unsigned char* serial = df->serialize();
+    DataFrame* df2 = new DataFrame(serial);
+    assert(df2->equals(df));
+    cout << "*****   Passed: DataFrame   *****\n";
+}
+
 int main() {
     cout << "Running serialization tests...\n";
     size_t_test();
@@ -299,5 +328,7 @@ int main() {
     register_test();
     kill_test();
     network_utility();
+    schema_test();
+    df_test();
     cout << "*****   All serialization tests passed   *****\n";
 }

@@ -2,6 +2,7 @@
 #pragma once 
 #include "../../string.h"
 #include "serial.h"
+#include "../../column.h"
 class StringArray : public Object, public Serializable {
     public:
         size_t len_;
@@ -18,6 +19,20 @@ class StringArray : public Object, public Serializable {
         }
 
         StringArray() : StringArray(30) {}
+
+        ~StringArray() {
+            for (size_t i = 0; i < len_; i++) {
+                delete vals_[i];
+            }
+            delete[] vals_;
+        }
+
+        StringArray(Column* c): StringArray(c->size()) {
+            if (c->get_type() != 'S') assert("Type other than S found." && false);
+            StringColumn* b = c->as_string();
+            for (size_t i = 0; i < b->size(); i++)
+                push(b->get(i));
+        }
 
         /** Serializes the StringArray into an unsigned char array. Structure is as following
          * 
@@ -51,7 +66,7 @@ class StringArray : public Object, public Serializable {
         }
 
         /** Deserialize the buffer. Mutates this StringArray to match the buffer */
-        void deserialize(unsigned char* buffer) {
+        size_t deserialize(unsigned char* buffer) {
             //Determine bytes to read
             size_t length = extract_size_t(buffer, 0);
             size_t index = 8;
@@ -61,17 +76,39 @@ class StringArray : public Object, public Serializable {
                 push(temp);
                 index += strlen(temp->c_str()) + 1;
             }
+            return length;
         }
 
         bool can_push() {
             return len_ < cap_;
         }
 
-        bool push(String* str) {
-            if (len_ == cap_) return false;
+        void push(String* str) {
+            ensureCapacity();
             vals_[len_] = str;
             len_++;
-            return true;
+        }
+
+        // ensures the internal array grows if it needs to
+        void ensureCapacity() {
+            if (len_ == cap_) {
+                grow();
+            }
+        }
+        
+        // grows the internal array by twice its size
+        void grow() {
+            if (cap_ == 0) {
+                cap_++;
+            } else {
+                cap_ = cap_ * 2;
+            }
+            String** newValues = new String*[cap_];
+            for (size_t i = 0; i < len_; i++) {
+                newValues[i] = vals_[i];
+            }
+            delete[] vals_;
+            vals_ = newValues;
         }
 
         bool remove(String* str) {
@@ -139,27 +176,75 @@ class DoubleArray : public Object, public Serializable  {
         size_t cap_;
         double* vals_;
 
+        DoubleArray(size_t capacity) {
+            len_ = 0;
+            cap_ = capacity;
+            vals_ = new double[cap_];
+            for (int i = 0; i < cap_; i++) {
+                vals_[i] = 0;
+            }
+        }
+
+        DoubleArray() : DoubleArray(30) {}
+
+        ~DoubleArray() {
+            delete[] vals_;
+        }
+
+        DoubleArray(Column* c): DoubleArray(c->size()) {
+            BoolColumn* x;
+            IntColumn* y;
+            DoubleColumn* z;
+            switch (c->get_type()) {
+                case 'B':
+                    x = c->as_bool();
+                    for (size_t i = 0; i < x->size(); i++) {
+                        if (x->get(i)) {
+                            push(1);
+                        } else {
+                            push(0);
+                        }
+                    }
+                    break;
+                case 'I':
+                    y = c->as_int();
+                    for (size_t i = 0; i < y->size(); i++) {
+                        push(double(y->get(i)));
+                    }
+                    break;
+                case 'D':
+                    z = c->as_double();
+                    for (size_t i = 0; i < z->size(); i++) {
+                        push(z->get(i));
+                    }
+                    break;
+                default:
+                    assert("Type other than B, I, or F found." && false);
+            }
+        }
+
         /** Serializes the DoubleArray into an unsigned char array. Structure is as following
          * 
-         * |--8 bytes--|--8 bytes each-----|
-         * |--len_-----|--vals1, vals2...--|
+         * |--8 bytes-------------|--8 bytes each-----|
+         * |--length in bytes-----|--vals1, vals2...--|
          */ 
         unsigned char* serialize() {
             size_t length = 8 + 8 * len_;
             unsigned char* buffer = new unsigned char[length];
-            insert_size_t(len_, buffer, 0);
+            insert_size_t(length, buffer, 0);
             for (size_t i = 0; i < len_; i++) 
                 insert_double(vals_[i], buffer, 8 + 8 * i);
             return buffer;
         }
 
         /** Deserialize the buffer. Mutates this StringArray to match the buffer */
-        void deserialize(unsigned char* buffer) {
-            len_ = extract_size_t(buffer, 0);
-            cap_ = len_ * 2;
+        size_t deserialize(unsigned char* buffer) {
+            len_ = (extract_size_t(buffer, 0) - 8) / 8;
+            cap_ = len_;
             vals_ = new double[cap_];
             for (int i = 0; i < len_; i++) 
-                vals_[i] = extract_double(buffer, 8 + 8 * i);          
+                vals_[i] = extract_double(buffer, 8 + 8 * i); 
+            return extract_size_t(buffer, 0);         
         }
 
         void push(double dbl) {
