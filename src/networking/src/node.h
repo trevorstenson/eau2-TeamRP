@@ -1,5 +1,6 @@
 //lang:CwC
 #pragma once
+#include <atomic>
 #include <stdio.h>  
 #include <stdlib.h>  
 #include <errno.h>  
@@ -22,6 +23,8 @@
 #define TEMP_CLIENTS_MAX 30
 #define BUFF_SIZE 1024
 
+using namespace std;
+
 //class representing a Node within our network
 class Node : public Object {
     public:
@@ -42,7 +45,7 @@ class Node : public Object {
         std::thread* listenToServerThread;
         std::thread* listenToNeighborsThread;
         fd_set neighborReadFds, neighborCurrentFds;
-        bool running;
+        atomic<bool> running;
 
         Node(const char* ip, int port, const char* serverIp, int serverPort) {
             ip_ = new String(ip);
@@ -56,6 +59,8 @@ class Node : public Object {
             neighborSockets = new int[TEMP_CLIENTS_MAX - 1];
             memset(neighborSockets, NULL, sizeof(neighborSockets));
             running = false;
+            listenToServerThread = nullptr;
+            listenToNeighborsThread = nullptr;
         }
 
         Node(const char* ip, const char* serverIp, int serverPort) : Node(ip, serverPort, serverIp, serverPort) { }
@@ -95,11 +100,7 @@ class Node : public Object {
             running = true;
             listenToServerThread = new std::thread(&Node::listenToServer, this);
             sendToServer(getRegistrationMessage());
-            //launch thread to listen to neighbors
-            listenToNeighborsThread = new std::thread(&Node::listenToNeighbors, this);
-            while(running) {
-
-            }
+            //while(running) { }
         }
 
         //initializes peer to peer listening for other Nodes
@@ -163,7 +164,6 @@ class Node : public Object {
                     }
                 }
             }
-            pln("end of listen to neighbors!");
         }
 
         //reads the incoming msg from the given file descriptor
@@ -175,7 +175,7 @@ class Node : public Object {
                 assert("Error reading incoming data." && false);
             }
             if (bytesRead == 0) {
-                //handleDisconnect(fd);
+                handleDisconnect(fd);
             }
             unsigned char* newBuff = new unsigned char[BUFF_SIZE];
             memcpy(newBuff, neighborBuffer, BUFF_SIZE);
@@ -184,17 +184,30 @@ class Node : public Object {
             return newBuff;
         }
 
+        void handleDisconnect(int fd) {
+            close(fd);
+            FD_CLR(fd, &neighborCurrentFds);
+        }
+
         //handles messages from other Nodes
         void handleNodeMsg(int fd, unsigned char* msg) {
-            MsgKind kind = message_kind(msg);
-            switch (kind) {
-                case MsgKind::Status: {
-                    handleStatus(fd, msg);
-                    break;
+            if (*msg != 0) {
+                MsgKind kind = message_kind(msg);
+                switch (kind) {
+                    case MsgKind::Status: {
+                        handleStatus(fd, msg);
+                        break;
+                    }
+                    default: {
+                        assert("Unrecognized message" && false);
+                    }
                 }
-                default: {
-                    assert("Unrecognized message" && false);
-                }
+            }
+        }
+
+        void sendToNeighbor(int fd, unsigned char* msg) {
+            if (send(fd, msg, message_length(msg), 0) < 0) {
+                assert("Error sending data to neighbor node." && false);
             }
         }
 
@@ -225,7 +238,7 @@ class Node : public Object {
         //handler for status messages
         void handleStatus(int fd, unsigned char* msg) {
             Status* incomingStatus = new Status(msg);
-            pln(incomingStatus->msg_->c_str());
+            p("Received on ").p(ip_->c_str()).p(":").p(port_).p(": ").pln(incomingStatus->msg_->c_str());
             delete incomingStatus;
         }
 
@@ -268,8 +281,8 @@ class Node : public Object {
             running = false;
             closeNodeConnections();
             closeServerConnection();
-            //listenToNeighborsThread->join();
-            //listenToServerThread->join();
+            listenToNeighborsThread->join();
+            listenToServerThread->join();
             pln("Gracefully exited.");
             exit(0);
         }
@@ -279,13 +292,11 @@ class Node : public Object {
             for (int i = 0; i < nodeDir->ports_len_; i++) {
                 close(neighborSockets[i]);
             }
-            pln("All Node connections closed.");
         }
 
         //closes the connection with the rendesvouz server
         void closeServerConnection() {
             close(serverSocket_);
-            pln("Server socket closed.");
         }
 
         //updated the node directory and opens connections with all other nodes
@@ -325,7 +336,7 @@ class Node : public Object {
                     sb->c(":");
                     sb->c(port_);
                     Status* greetStatus = new Status(sb->get());
-                    sendToNeighbor(nodeDir->addresses->vals_[i], nodeDir->ports[i], greetStatus->serialize());
+                    sendToNeighbor(neighborSockets[i], greetStatus->serialize());
                     delete sb;
                     delete greetStatus;
                 }
@@ -337,6 +348,10 @@ class Node : public Object {
             switch (ack->previous_kind) {
                 case MsgKind::Register: {
                     pln("Successfully registered!");
+                    if (listenToNeighborsThread == nullptr) {
+                        //launch thread to listen to neighbors
+                        listenToNeighborsThread = new std::thread(&Node::listenToNeighbors, this);
+                    }
                     break;
                 }
                 default: {
