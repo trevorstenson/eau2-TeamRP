@@ -171,9 +171,6 @@ class Node : public Object {
             if (bytesRead < 0) {
                 assert("Error reading incoming data." && false);
             }
-            if (bytesRead == 0) {
-                handleDisconnect(fd);
-            }
             unsigned char* newBuff = new unsigned char[BUFF_SIZE];
             memcpy(newBuff, neighborBuffer, BUFF_SIZE);
             //clear buffer
@@ -199,6 +196,8 @@ class Node : public Object {
                         assert("Unrecognized message" && false);
                     }
                 }
+            } else {
+                handleDisconnect(fd);
             }
         }
 
