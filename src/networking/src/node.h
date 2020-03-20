@@ -283,17 +283,19 @@ class Node : public Object {
         //Creates connections with all other nodes in the node directory
         void createNeighborConnections() {
             for (int i = 0; i < nodeDir->ports_len_; i++) {
-                if (!(nodeDir->addresses->vals_[i]->equals(ip_) && nodeDir->ports[i] == port_)) {
-                    neighborSockets[i] = socket(AF_INET, SOCK_STREAM, 0);
-                    if (neighborSockets[i] < 0) {
-                        assert("Error creating socket." && false);
-                    }
-                    struct sockaddr_in neighboraddr;
-                    neighboraddr.sin_family = AF_INET;
-                    neighboraddr.sin_addr.s_addr = inet_addr(ip_->c_str());
-                    neighboraddr.sin_port = htons(port_);
-                    if (connect(neighborSockets[i], (struct sockaddr *)&neighboraddr, sizeof(neighboraddr)) < 0) {
-                        assert("Could not connect to neighbor." && false);
+                if (neighborSockets[i] == NULL) {
+                    if (!(nodeDir->addresses->vals_[i]->equals(ip_) && nodeDir->ports[i] == port_)) {
+                        neighborSockets[i] = socket(AF_INET, SOCK_STREAM, 0);
+                        if (neighborSockets[i] < 0) {
+                            assert("Error creating socket." && false);
+                        }
+                        struct sockaddr_in neighboraddr;
+                        neighboraddr.sin_family = AF_INET;
+                        neighboraddr.sin_addr.s_addr = inet_addr(ip_->c_str());
+                        neighboraddr.sin_port = htons(port_);
+                        if (connect(neighborSockets[i], (struct sockaddr *)&neighboraddr, sizeof(neighboraddr)) < 0) {
+                            assert("Could not connect to neighbor." && false);
+                        }
                     }
                 }
             }
