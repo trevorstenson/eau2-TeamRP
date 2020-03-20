@@ -11,12 +11,16 @@ class Application : public Object {
 
         Application(size_t idx) {
             idx_ = idx;
-            kv();
+            //kv = new KVStore();
         }
 
-        ~Application() { }
+        ~Application() {
+            //delete kv;
+        }
 
-        virtual void run_();
+        virtual void run_() {
+            
+        }
 
         size_t this_node() {
             return idx_;

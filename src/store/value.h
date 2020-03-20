@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../object.h"
+
 class Value : public Object {
     public:
         unsigned char* blob_;

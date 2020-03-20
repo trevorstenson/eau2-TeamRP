@@ -1,19 +1,23 @@
 //lang: CwC
 #pragma once
 
+#include "store/kvstore.h"
 #include "column.h"
 #include "row.h"
 #include "rower.h"
 #include "schema.h"
-#include "store/kvstore.h"
 #include "serial/src/serial.h"
 #include "serial/src/array.h"
+#include "object.h"
 #include <thread>
 #include <mutex>
 #include <functional>
+#include <string>
 
 #define MAX_THREADS 8
 #define MIN_LINES 1000
+
+class KVStore;
 
 /****************************************************************************
  * DataFrame::
@@ -395,7 +399,16 @@ class DataFrame : public Object, public Serializable {
   }
 
   static DataFrame* fromArray(Key* key, KVStore* kv, size_t size, double* array) {
-    return nullptr;
+    String* schemaStr = new String("D");
+    Schema* newSchema = new Schema(schemaStr->c_str());
+    delete schemaStr;
+    DataFrame* newDf = new DataFrame(*newSchema);
+    for (size_t i = 0; i < size; i++) {
+      newDf->set(0, i, array[i]);
+    }
+    //serialize and add df to kvstore
+    //kv->put(*key, newDf->serialize());
+    return newDf;
   }
  
   /** Print the dataframe in SoR format to standard output. */
