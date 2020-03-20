@@ -72,7 +72,7 @@ class Server : public Object {
             address.sin_addr.s_addr = inet_addr(serverIp->c_str());
             address.sin_port = htons(serverPort_);
             //bind the socket to serverPort
-            if (bind(master_socket, (struct sockaddr *)&address, sizeof(address))<0) { 
+            if (::bind(master_socket, (struct sockaddr *)&address, sizeof(address))<0) { 
                 assert("Error binding master socket." && false);
             }
             if (listen(master_socket, nodeCount_) < 0) {

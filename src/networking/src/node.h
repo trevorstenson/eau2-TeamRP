@@ -23,8 +23,6 @@
 #define TEMP_CLIENTS_MAX 30
 #define BUFF_SIZE 1024
 
-using namespace std;
-
 //class representing a Node within our network
 class Node : public Object {
     public:
@@ -119,7 +117,7 @@ class Node : public Object {
             clientaddr.sin_port = htons(port_);
 
             //bind to user provided client port for listening to neighbors
-            if (bind(clientSocket_, (struct sockaddr *)&clientaddr, sizeof(clientaddr)) < 0) { 
+            if (::bind(clientSocket_, (struct sockaddr *)&clientaddr, sizeof(clientaddr)) < 0) { 
                 assert("Error binding client socket." && false);
             }
 
