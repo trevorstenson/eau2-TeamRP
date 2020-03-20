@@ -210,30 +210,6 @@ class Node : public Object {
             }
         }
 
-        //sends the given msg to the neighbor at the provided ip and port
-        void sendToNeighbor(String* ip, size_t port, unsigned char* msg) {
-            int neighborSocket = initializeNeighborConnection(ip, port);
-            if (send(neighborSocket, msg, message_length(msg), 0) < 0) {
-                assert("Error sending data to neighbor node." && false);
-            }
-        }
-
-        //initializes a connection with the neighbor at the given ip and port
-        int initializeNeighborConnection(String* ip, size_t port) {
-            int returnSocket = socket(AF_INET, SOCK_STREAM, 0);
-            if (returnSocket < 0) {
-                assert("Error creating socket." && false);
-            }
-            struct sockaddr_in neighboraddr;
-            neighboraddr.sin_family = AF_INET;
-            neighboraddr.sin_addr.s_addr = inet_addr(ip->c_str());
-            neighboraddr.sin_port = htons(port);
-            if (connect(returnSocket, (struct sockaddr *)&neighboraddr, sizeof(neighboraddr)) < 0) {
-                assert("Could not connect to neighbor." && false);
-            }
-            return returnSocket;
-        }
-
         //handler for status messages
         void handleStatus(int fd, unsigned char* msg) {
             Status* incomingStatus = new Status(msg);
