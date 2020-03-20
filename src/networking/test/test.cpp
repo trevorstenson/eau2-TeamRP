@@ -10,16 +10,16 @@
 #include <mutex>
 
 void network_test() {
-    std::thread** threads = new std::thread*[7];
-    Server* s = new Server("127.0.0.1", 8080, 7);
+    std::thread** threads = new std::thread*[3];
+    Server* s = new Server("127.0.0.1", 8080, 3);
     s->serve();
-    for (int i = 0; i < 7; i++) {
+    for (int i = 0; i < 3; i++) {
         threads[i] = new std::thread(&Node::registerWithServer, new Node("127.0.0.1", 9050 + i, "127.0.0.1", 8080));
         usleep(1000000);
     }
     usleep(10000000);
     s->shutdown();
-    for (int i = 0; i < 7; i++) {
+    for (int i = 0; i < 3; i++) {
         threads[i]->join();
     }
 }

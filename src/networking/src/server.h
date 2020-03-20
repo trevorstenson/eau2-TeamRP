@@ -1,5 +1,6 @@
 //lang:CwC
 #pragma once
+#include <atomic>
 #include <stdio.h>  
 #include <stdlib.h>  
 #include <string.h>
@@ -32,7 +33,7 @@ class Server : public Object {
         struct sockaddr_in address;
         fd_set readfds, currentfds;
         unsigned char* buffer;
-        bool running;
+        std::atomic<bool> running;
         std::thread* updateThread;
 
         Server(const char* ip, int serverPort, int nodeCount) {
@@ -143,24 +144,23 @@ class Server : public Object {
 
         //primary message handler for incoming node messages
         void handleMessage(int fd, unsigned char* msg) {
-            MsgKind kind = message_kind(msg);
-            switch (kind) {
-                case MsgKind::Register: {
-                    handleRegistration(fd, msg);
-                    break;
+            if (*msg != 0) {
+                MsgKind kind = message_kind(msg);
+                switch (kind) {
+                    case MsgKind::Register: {
+                        handleRegistration(fd, msg);
+                        break;
+                    }
+                    default: {
+                        assert("Unrecognized message type" && false);
+                    }
                 }
-                default: {
-                    assert("Unrecognized message type" && false);
-                }
+                nodeDir->print();
             }
-            nodeDir->print();
         }
 
         //handler for socket disconnections
         void handleDisconnect(int fd) {
-            int addrlen = sizeof(address);
-            getpeername(fd, (struct sockaddr*)&address ,(socklen_t*)&addrlen); 
-            printf("Host disconnected, ip %s, port %d \n" ,inet_ntoa(address.sin_addr) , ntohs(address.sin_port));
             close(fd);
             FD_CLR(fd, &currentfds);
         }
@@ -196,6 +196,7 @@ class Server : public Object {
 
         // shutsdown the server
         void shutdown() {
+            running = false;
             Kill* k = new Kill();
             for (int i = 0; i < nodeCount_; i++) {
                 if (sockets[i]) {
@@ -203,6 +204,7 @@ class Server : public Object {
                 }
             }
             delete k;
+            updateThread->join();
             pln("Shutting down.");
             exit(0);
         }
