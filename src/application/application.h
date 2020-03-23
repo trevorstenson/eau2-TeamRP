@@ -2,7 +2,7 @@
 
 #include <cstdlib>
 #include "../object.h"
-#include "../store/kvstore.h"
+#include "../dataframe.h"
 
 class Application : public Object {
     public:
@@ -11,11 +11,11 @@ class Application : public Object {
 
         Application(size_t idx) {
             idx_ = idx;
-            //kv = new KVStore();
+            kv = KVStore();
         }
 
         ~Application() {
-            //delete kv;
+            delete &kv;
         }
 
         virtual void run_() {
