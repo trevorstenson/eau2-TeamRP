@@ -14,7 +14,7 @@
 #include <string>
 
 //KVStore
-#include <map>
+#include "map.h"
 #include "store/key.h"
 #include "store/value.h"
 
@@ -22,10 +22,12 @@
 #define MIN_LINES 1000
 
 class DataFrame;
+class Key;
+class Value;
 
 class KVStore : public Object  {
     public:
-        map<Key*, Value*>* kv_map_;
+        KVMap* kv_map_;
         KVStore();
         ~KVStore();
         bool containsKey(Key* k);
@@ -423,7 +425,9 @@ class DataFrame : public Object, public Serializable {
       newDf->set(0, i, array[i]);
     }
     //serialize and add df to kvstore
-    kv->put(*key, newDf->serialize());
+    Value* v = new Value(newDf->serialize());
+    kv->put(*key, v);
+    printf("key: %s\n", key->name_->c_str());
     return newDf;
   }
  
@@ -572,39 +576,25 @@ class DataFrame : public Object, public Serializable {
 //KVStore definitions///////////////////////
 
 inline KVStore::KVStore() {
-    kv_map_ = new map<Key*, Value*>;
+    kv_map_ = new KVMap();
 }
 inline KVStore::~KVStore() {
     delete kv_map_;
 }
 inline bool KVStore::containsKey(Key* k) {
-    for (map<Key*, Value*>::iterator itr = kv_map_->begin(); itr != kv_map_->end(); ++itr) {
-        Key* key = itr->first;
-        if (key->equals(k)) return true;
-    }
-    return false;
+  return kv_map_->containsKey(k);
 }
 inline Value* KVStore::put(Key& k, Value* v) {
-    if (!containsKey(&k)) {
-        kv_map_->insert(pair<Key*, Value*>(&k, v));
-        return v;
-    }
-    return nullptr;
+  return kv_map_->put(&k, v);
 }
 inline Value* KVStore::put(Key& k, unsigned char* data) {
-    put(k, new Value(data));
+  return put(k, new Value(data));
 }
 inline DataFrame* KVStore::get(Key& k) {
     cout << kv_map_->size() << std::flush <<  endl;
-    for (map<Key*, Value*>::iterator itr = kv_map_->begin(); itr != kv_map_->end(); ++itr) {
-        Key* key = itr->first;
-        printf("key: %s", key->name_->c_str());
-        if (key->equals(&k)) {
-            DataFrame* newdf = new DataFrame(itr->second->blob_);
-            //for debugging
-            //newdf->print();
-            return newdf;
-        }
+    Value* v = kv_map_->get(&k);
+    if (v != nullptr) {
+      return new DataFrame(v->blob_);
     }
     return nullptr;
 }
