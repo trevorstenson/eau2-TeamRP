@@ -16,7 +16,7 @@ class Trivial : public Application {
             for (size_t i = 0; i < SZ; ++i) sum -= df2->get_double(0,i);
             assert(sum==0);
             Key ver("check", 0);
-            DataFrame* onevaldf = DataFrame::fromScalar(&key, &kv, 345.6);
+            DataFrame* onevaldf = DataFrame::fromScalar(&ver, &kv, 345.6);
             DataFrame* twovaldf = kv.get(ver);
             onevaldf->print();
             twovaldf->print();

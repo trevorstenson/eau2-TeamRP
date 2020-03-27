@@ -10,10 +10,10 @@ public:
  
   void run_() override {
     switch(this_node()) {
-    case 0:   producer();     break;
-    case 1:   counter();      break;
-    case 2:   summarizer();
-   }
+        case 0:   producer();     break;
+        case 1:   counter();      break;
+        case 2:   summarizer();
+    }
   }
  
   void producer() {

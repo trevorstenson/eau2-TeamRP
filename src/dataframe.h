@@ -17,6 +17,7 @@
 #include "map.h"
 #include "store/key.h"
 #include "store/value.h"
+#include "application/application.h"
 
 #define MAX_THREADS 8
 #define MIN_LINES 1000
@@ -24,12 +25,15 @@
 class DataFrame;
 class Key;
 class Value;
+class Application;
 
 class KVStore : public Object  {
     public:
         KVMap kv_map_;
+        Application* app_;
         KVStore();
         ~KVStore();
+        void setApplication(Application* app);
         bool containsKey(Key* k);
         Value* put(Key& k, Value* v);
         Value* put(Key& k, unsigned char* data);
@@ -581,27 +585,39 @@ class DataFrame : public Object, public Serializable {
   }
 };
 
-//KVStore definitions///////////////////////
 
+
+//KVStore definitions///////////////////////
 inline KVStore::KVStore() {}
 inline KVStore::~KVStore() {}
 inline bool KVStore::containsKey(Key* k) {
   return kv_map_.containsKey(k);
 }
 inline Value* KVStore::put(Key& k, Value* v) {
-  //return v;
  return kv_map_.put(&k, v);
+}
+inline void KVStore::setApplication(Application* app) {
+  app_ = app;
 }
 inline Value* KVStore::put(Key& k, unsigned char* data) {
   return put(k, new Value(data));
 }
 inline DataFrame* KVStore::get(Key& k) {
+  // data is stored in local kvstore
+  if (app_->this_node() == k.node_) {
     Value* v = kv_map_.get(&k);
     if (v != nullptr) {
       return new DataFrame(v->blob_);
     }
-    return nullptr;
+  }
+  // ask the network for data
+  Value* received = app_->requestValue(&k);
+    if (received == nullptr) {
+      return nullptr;
+    }
+  return new DataFrame(received->blob_);
 }
+
 inline Value* KVStore::waitAndGet(Key& k) {
     return nullptr;
 }
