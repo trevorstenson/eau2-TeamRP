@@ -27,14 +27,14 @@ class Value;
 
 class KVStore : public Object  {
     public:
-        KVMap* kv_map_;
+        KVMap kv_map_;
         KVStore();
         ~KVStore();
         bool containsKey(Key* k);
         Value* put(Key& k, Value* v);
         Value* put(Key& k, unsigned char* data);
         DataFrame* get(Key& k);
-        Value* getAndWait(Key& k);
+        Value* waitAndGet(Key& k);
 };
 
 /****************************************************************************
@@ -425,9 +425,17 @@ class DataFrame : public Object, public Serializable {
       newDf->set(0, i, array[i]);
     }
     //serialize and add df to kvstore
-    Value* v = new Value(newDf->serialize());
-    kv->put(*key, v);
-    printf("key: %s\n", key->name_->c_str());
+    kv->put(*key, newDf->serialize());
+    return newDf;
+  }
+
+  static DataFrame* fromScalar(Key* key, KVStore* kv, double value) {
+    String* schemaStr = new String("D");
+    Schema* newSchema = new Schema(schemaStr->c_str());
+    delete schemaStr;
+    DataFrame* newDf = new DataFrame(*newSchema);
+    newDf->set(0, 0, value);
+    kv->put(*key, newDf->serialize());
     return newDf;
   }
  
@@ -575,29 +583,25 @@ class DataFrame : public Object, public Serializable {
 
 //KVStore definitions///////////////////////
 
-inline KVStore::KVStore() {
-    kv_map_ = new KVMap();
-}
-inline KVStore::~KVStore() {
-    delete kv_map_;
-}
+inline KVStore::KVStore() {}
+inline KVStore::~KVStore() {}
 inline bool KVStore::containsKey(Key* k) {
-  return kv_map_->containsKey(k);
+  return kv_map_.containsKey(k);
 }
 inline Value* KVStore::put(Key& k, Value* v) {
-  return kv_map_->put(&k, v);
+  //return v;
+ return kv_map_.put(&k, v);
 }
 inline Value* KVStore::put(Key& k, unsigned char* data) {
   return put(k, new Value(data));
 }
 inline DataFrame* KVStore::get(Key& k) {
-    cout << kv_map_->size() << std::flush <<  endl;
-    Value* v = kv_map_->get(&k);
+    Value* v = kv_map_.get(&k);
     if (v != nullptr) {
       return new DataFrame(v->blob_);
     }
     return nullptr;
 }
-inline Value* KVStore::getAndWait(Key& k) {
+inline Value* KVStore::waitAndGet(Key& k) {
     return nullptr;
 }

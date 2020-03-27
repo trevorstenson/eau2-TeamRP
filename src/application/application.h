@@ -11,11 +11,6 @@ class Application : public Object {
 
         Application(size_t idx) {
             idx_ = idx;
-            kv = KVStore();
-        }
-
-        ~Application() {
-            delete &kv;
         }
 
         virtual void run_() {

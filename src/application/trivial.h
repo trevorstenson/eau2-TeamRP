@@ -13,11 +13,13 @@ class Trivial : public Application {
             DataFrame* df = DataFrame::fromArray(&key, &kv, SZ, vals);
             assert(df->get_double(0,1) == 1);
             DataFrame* df2 = kv.get(key);
-            for (size_t i = 0; i < SZ; ++i) {
-                std::cout << i << endl << std::flush;
-                sum -= df2->get_double(0,i);
-            }
+            for (size_t i = 0; i < SZ; ++i) sum -= df2->get_double(0,i);
             assert(sum==0);
+            Key ver("check", 0);
+            DataFrame* onevaldf = DataFrame::fromScalar(&key, &kv, 345.6);
+            DataFrame* twovaldf = kv.get(ver);
+            onevaldf->print();
+            twovaldf->print();
             delete df; delete df2;
         }
 };

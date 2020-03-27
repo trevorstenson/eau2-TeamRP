@@ -52,7 +52,7 @@ Value* put(Key& k, unsigned char* data) {
 DataFrame* get(Key& k) {
     for (map<Key*, Value*>::iterator itr = kv_map_->begin(); itr != kv_map_->end(); ++itr) {
         Key* key = itr->first;
-        printf("key: %s", key->name_->c_str());
+        //printf("key: %s", key->name_->c_str());
         if (key->equals(&k)) {
             DataFrame* newdf = new DataFrame(itr->second->blob_);
             //for debugging
