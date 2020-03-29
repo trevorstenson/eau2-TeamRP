@@ -7,8 +7,7 @@ public:
   Key verify = Key("verify", 0);
   Key check = Key("check", 0);
  
-  Demo(size_t idx): Application(idx) {
-  }
+  Demo(size_t idx): Application(idx) { }
  
   void run_() override {
     switch(this_node()) {
