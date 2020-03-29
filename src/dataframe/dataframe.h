@@ -26,6 +26,7 @@ class DataFrame;
 class KVStore : public Object  {
     public:
         KVMap kv_map_;
+        size_t idx_;
         KVStore();
         ~KVStore();
         bool containsKey(Key* k);
@@ -37,7 +38,6 @@ class KVStore : public Object  {
         //TODO Remove methods/fields + replace with a real network
         KVStore** mock_network_;
         void setMockNetwork(KVStore** mockNetwork);
-        size_t idx_;
         void setIndex(size_t idx);
 };
 

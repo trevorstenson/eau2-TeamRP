@@ -11,13 +11,13 @@ class Application : public Object {
 
         Application(size_t idx) {
             idx_ = idx;
+            kv.setIndex(idx);
         }
 
         virtual void run_() { }
 
         void setMockNetwork(KVStore** mockNetwork) {
             kv.setMockNetwork(mockNetwork);
-            kv.setIndex(idx_);
         }
 
         size_t this_node() {
