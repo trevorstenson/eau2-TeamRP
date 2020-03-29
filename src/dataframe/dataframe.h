@@ -594,7 +594,13 @@ inline bool KVStore::containsKey(Key* k) {
   return kv_map_.containsKey(k);
 }
 inline Value* KVStore::put(Key& k, Value* v) {
- return kv_map_.put(&k, v);
+  // data is stored in local kvstore
+  if (idx_ == k.node_) {
+    return kv_map_.put(&k, v);
+  } else {
+    // Send the data to the correct node TODO change to real network call
+    return mock_network_[k.node_]->put(k, v);
+  }
 }
 inline Value* KVStore::put(Key& k, unsigned char* data) {
   return put(k, new Value(data));
@@ -615,7 +621,7 @@ inline DataFrame* KVStore::waitAndGet(Key& k) {
     Value* received = kv_map_.get(&k);
     return (received == nullptr) ? nullptr : new DataFrame(received->blob_);
   } else {
-    // ask the network for data
+    // ask the network for data TODO change to real network call
     return mock_network_[k.node_]->get(k);
   }
 }
