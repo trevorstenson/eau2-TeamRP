@@ -5,40 +5,40 @@
 #include "row.h"
 #include "rower.h"
 #include "schema.h"
-#include "serial/src/serial.h"
-#include "serial/src/array.h"
-#include "object.h"
+#include "../serial/src/serial.h"
+#include "../serial/src/array.h"
+#include "../object.h"
 #include <thread>
 #include <mutex>
 #include <functional>
 #include <string>
 
 //KVStore
-#include "map.h"
-#include "store/key.h"
-#include "store/value.h"
-#include "application/application.h"
+#include "../map.h"
+#include "../store/key.h"
+#include "../store/value.h"
 
 #define MAX_THREADS 8
 #define MIN_LINES 1000
 
 class DataFrame;
-class Key;
-class Value;
-class Application;
 
 class KVStore : public Object  {
     public:
         KVMap kv_map_;
-        Application* app_;
         KVStore();
         ~KVStore();
-        void setApplication(Application* app);
         bool containsKey(Key* k);
         Value* put(Key& k, Value* v);
         Value* put(Key& k, unsigned char* data);
         DataFrame* get(Key& k);
         DataFrame* waitAndGet(Key& k);
+
+        //TODO Remove methods/fields + replace with a real network
+        KVStore** mock_network_;
+        void setMockNetwork(KVStore** mockNetwork);
+        size_t idx_;
+        void setIndex(size_t idx);
 };
 
 /****************************************************************************
@@ -596,30 +596,35 @@ inline bool KVStore::containsKey(Key* k) {
 inline Value* KVStore::put(Key& k, Value* v) {
  return kv_map_.put(&k, v);
 }
-inline void KVStore::setApplication(Application* app) {
-  app_ = app;
-}
 inline Value* KVStore::put(Key& k, unsigned char* data) {
   return put(k, new Value(data));
 }
 inline DataFrame* KVStore::get(Key& k) {
   // data is stored in local kvstore
-  if (app_->this_node() == k.node_) {
-    Value* v = kv_map_.get(&k);
-    return (v != nullptr) ? new DataFrame(v->blob_) : nullptr;
+  if (idx_ == k.node_) {
+    Value* received = kv_map_.get(&k);
+    return (received == nullptr) ? nullptr : new DataFrame(received->blob_);
   } else {
     // ask the network for data
-    Value* received = app_->requestValue(&k);
-    return (received != nullptr) ? new DataFrame(received->blob_) : nullptr;
+    return mock_network_[k.node_]->get(k);
+  }
+}
+inline DataFrame* KVStore::waitAndGet(Key& k) {
+  // data is stored in local kvstore
+  if (idx_ == k.node_) {
+    Value* received = kv_map_.get(&k);
+    return (received == nullptr) ? nullptr : new DataFrame(received->blob_);
+  } else {
+    // ask the network for data
+    return mock_network_[k.node_]->get(k);
   }
 }
 
-inline DataFrame* KVStore::waitAndGet(Key& k) {
-  if (app_->this_node() == k.node_) {
-    Value* v = kv_map_.get(&k);
-    return (v != nullptr) ? new DataFrame(v->blob_) : nullptr;
-  } else {
-    //wait for data to be gotten from the network
-    return nullptr;
-  }
+
+//TODO Remove once network is implemented
+inline void KVStore::setMockNetwork(KVStore** mockNetwork) {
+  mock_network_ = mockNetwork;
+}
+inline void KVStore::setIndex(size_t idx) {
+  idx_ = idx;
 }

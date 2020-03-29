@@ -12,6 +12,7 @@ class Key : public Object {
             name_ = new String(name);
             node_ = node;
         }
+
         ~Key() {
             delete name_;
         }

@@ -1,11 +1,11 @@
 #pragma once
 
-#include "string.h"
 #include "assert.h"
 #include "stdarg.h"
-#include "helper.h"
 #include "math.h"
 #include <iostream>
+#include "../string.h"
+#include "../helper.h"
 
 class IntColumn;
 class BoolColumn;

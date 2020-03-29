@@ -2,30 +2,22 @@
 
 #include <cstdlib>
 #include "../object.h"
-#include "../dataframe.h"
+#include "../dataframe/dataframe.h"
 
 class Application : public Object {
     public:
         size_t idx_;
         KVStore kv;
-        KVStore** mockNetwork_;
-
 
         Application(size_t idx) {
             idx_ = idx;
-            kv.setApplication(this);
         }
 
-        virtual void run_() {
-            
-        }
+        virtual void run_() { }
 
         void setMockNetwork(KVStore** mockNetwork) {
-            mockNetwork_ = mockNetwork;
-        }
-
-        Value* requestValue(Key& k) {
-            mockNetwork_[k.node_]->get(k);
+            kv.setMockNetwork(mockNetwork);
+            kv.setIndex(idx_);
         }
 
         size_t this_node() {

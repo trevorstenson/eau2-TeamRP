@@ -1,7 +1,7 @@
 //lang: CwC
 #pragma once
 
-#include "object.h"
+#include "../object.h"
 
 /*****************************************************************************
  * Fielder::

@@ -2,7 +2,7 @@
 #pragma once 
 #include "../../string.h"
 #include "serial.h"
-#include "../../column.h"
+#include "../../dataframe/column.h"
 class StringArray : public Object, public Serializable {
     public:
         size_t len_;

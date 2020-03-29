@@ -1,13 +1,14 @@
 #include "application.h"
-#include "../dataframe.h"
+#include "../dataframe/dataframe.h"
 
 class Demo : public Application {
 public:
-  Key main("main",0);
-  Key verify("verif",0);
-  Key check("ck",0);
+  Key main = Key("main", 0);
+  Key verify = Key("verify", 0);
+  Key check = Key("check", 0);
  
-  Demo(size_t idx): Application(idx) {}
+  Demo(size_t idx): Application(idx) {
+  }
  
   void run_() override {
     switch(this_node()) {
