@@ -1,6 +1,6 @@
 #include "../src/application/demo.h"
 #include "assert.h"
-#include <thread.h>
+#include <thread>
 
 using namespace std;
 

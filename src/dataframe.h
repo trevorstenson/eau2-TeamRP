@@ -38,7 +38,7 @@ class KVStore : public Object  {
         Value* put(Key& k, Value* v);
         Value* put(Key& k, unsigned char* data);
         DataFrame* get(Key& k);
-        Value* waitAndGet(Key& k);
+        DataFrame* waitAndGet(Key& k);
 };
 
 /****************************************************************************
@@ -606,18 +606,20 @@ inline DataFrame* KVStore::get(Key& k) {
   // data is stored in local kvstore
   if (app_->this_node() == k.node_) {
     Value* v = kv_map_.get(&k);
-    if (v != nullptr) {
-      return new DataFrame(v->blob_);
-    }
+    return (v != nullptr) ? new DataFrame(v->blob_) : nullptr;
+  } else {
+    // ask the network for data
+    Value* received = app_->requestValue(&k);
+    return (received != nullptr) ? new DataFrame(received->blob_) : nullptr;
   }
-  // ask the network for data
-  Value* received = app_->requestValue(&k);
-    if (received == nullptr) {
-      return nullptr;
-    }
-  return new DataFrame(received->blob_);
 }
 
-inline Value* KVStore::waitAndGet(Key& k) {
+inline DataFrame* KVStore::waitAndGet(Key& k) {
+  if (app_->this_node() == k.node_) {
+    Value* v = kv_map_.get(&k);
+    return (v != nullptr) ? new DataFrame(v->blob_) : nullptr;
+  } else {
+    //wait for data to be gotten from the network
     return nullptr;
+  }
 }
