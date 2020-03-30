@@ -1,3 +1,5 @@
+//lang: cwc
+
 #pragma once
 #include "object.h"
 #include "assert.h"

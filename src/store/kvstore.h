@@ -1,3 +1,5 @@
+//NOTE: This class has been moved to the dataframe.h file to fix a circular dependency.
+
 // #pragma once
 
 // #include <map>
