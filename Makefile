@@ -18,12 +18,12 @@ valgrind:
 	valgrind --leak-check=full ./df_test
 
 clean:
-	rm ./util_test
-	rm ./sor_test
-	rm ./df_test
-	rm ./m2
+	#rm ./util_test
+	#rm ./sor_test
+	#rm ./df_test
+	#rm ./m2
 	rm ./m3
-	rm test/*.sor
-	rm ./*.sor
+	#rm test/*.sor
+	#rm ./*.sor
 	
 .PHONY: build test clean

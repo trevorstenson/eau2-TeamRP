@@ -5,8 +5,8 @@
 #include "row.h"
 #include "rower.h"
 #include "schema.h"
-#include "../serial/src/serial.h"
-#include "../serial/src/array.h"
+#include "../serial/serial.h"
+#include "../serial/array.h"
 #include "../object.h"
 #include <thread>
 #include <mutex>

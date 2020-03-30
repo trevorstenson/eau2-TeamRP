@@ -2,7 +2,7 @@
 #pragma once
 
 #include "string.h"
-#include "../serial/src/serial.h"
+#include "../serial/serial.h"
 
 /*************************************************************************
  * Schema::

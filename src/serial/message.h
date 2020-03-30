@@ -1,6 +1,6 @@
 //CwC
 #pragma once 
-#include "../../string.h"
+#include "../string.h"
 #include "array.h"
 #include "serial.h"
 
