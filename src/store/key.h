@@ -1,5 +1,8 @@
+//lang: cwc
+
 #pragma once
 
+#include "../object.h"
 #include "../string.h"
 
 class Key : public Object {
@@ -11,6 +14,7 @@ class Key : public Object {
             name_ = new String(name);
             node_ = node;
         }
+
         ~Key() {
             delete name_;
         }

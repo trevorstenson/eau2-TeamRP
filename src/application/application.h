@@ -2,7 +2,7 @@
 
 #include <cstdlib>
 #include "../object.h"
-#include "../store/kvstore.h"
+#include "../dataframe/dataframe.h"
 
 class Application : public Object {
     public:
@@ -11,12 +11,14 @@ class Application : public Object {
 
         Application(size_t idx) {
             idx_ = idx;
-            kv();
+            kv.setIndex(idx);
         }
 
-        ~Application() { }
+        virtual void run_() { }
 
-        virtual void run_();
+        void setMockNetwork(KVStore** mockNetwork) {
+            kv.setMockNetwork(mockNetwork);
+        }
 
         size_t this_node() {
             return idx_;

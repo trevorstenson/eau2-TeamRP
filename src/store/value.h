@@ -1,4 +1,8 @@
+//lang: cwc
+
 #pragma once
+
+#include "../object.h"
 
 class Value : public Object {
     public:

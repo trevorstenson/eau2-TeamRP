@@ -1,6 +1,6 @@
 //CwC
 #pragma once 
-#include "../../string.h"
+#include "../string.h"
 #include "utils.h"
 
 class Serializable {

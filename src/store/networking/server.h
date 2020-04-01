@@ -132,6 +132,9 @@ class Server : public Object {
             if (bytesRead < 0) {
                 assert("Error reading incoming data." && false);
             }
+            if (bytesRead == 0) {
+                handleDisconnect(fd);
+            }
             unsigned char* newBuff = new unsigned char[BUFF_SIZE];
             memcpy(newBuff, buffer, BUFF_SIZE);
             //clear buffer
@@ -153,8 +156,6 @@ class Server : public Object {
                     }
                 }
                 nodeDir->print();
-            } else {
-                handleDisconnect(fd);
             }
         }
 

@@ -2,7 +2,7 @@
 #pragma once
 
 #include "string.h"
-#include "serial/src/serial.h"
+#include "../serial/serial.h"
 
 /*************************************************************************
  * Schema::
@@ -31,6 +31,7 @@ class Schema : public Object, public Serializable {
       n_row = from.n_row;
       col_cap = from.col_cap;
       types = new char[col_cap];
+      for (int i = 0; i < col_cap; i++) types[i] = '\0';
       strcpy(types, from.types);
     }
   
@@ -40,6 +41,7 @@ class Schema : public Object, public Serializable {
       n_row = 0;
       col_cap = 4;
       types = new char[col_cap];
+      for (int i = 0; i < col_cap; i++) types[i] = '\0';
     }
 
     Schema(unsigned char* serial): Schema() {
@@ -56,6 +58,7 @@ class Schema : public Object, public Serializable {
         size_t capacity = n_col < 4 ? 4 : n_col;
         col_cap = capacity;
         types = new char[col_cap];
+        for (int i = 0; i < col_cap; i++) types[i] = '\0';
         strcpy(types, types_);
         n_row = 0;
       } else {
@@ -118,6 +121,7 @@ class Schema : public Object, public Serializable {
       }
       char* temp = types;
       types = new char[col_cap];
+      for (int i = 0; i < col_cap; i++) types[i] = '\0';
       strcpy(types, temp);
     }
   

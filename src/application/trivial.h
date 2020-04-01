@@ -1,6 +1,4 @@
 #include "application.h"
-#include "../dataframe.h"
-#include "../store/key.h"
 
 class Trivial : public Application {
     public:
@@ -17,6 +15,11 @@ class Trivial : public Application {
             DataFrame* df2 = kv.get(key);
             for (size_t i = 0; i < SZ; ++i) sum -= df2->get_double(0,i);
             assert(sum==0);
+            Key ver("check", 0);
+            DataFrame* onevaldf = DataFrame::fromScalar(&ver, &kv, 345.6);
+            DataFrame* twovaldf = kv.get(ver);
+            onevaldf->print();
+            twovaldf->print();
             delete df; delete df2;
         }
 };

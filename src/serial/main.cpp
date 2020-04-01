@@ -1,6 +1,6 @@
-#include "../src/array.h"
-#include "../src/message.h"
-#include "../src/serial.h"
+#include "array.h"
+#include "message.h"
+#include "serial.h"
 
 using namespace std;
 

@@ -16,7 +16,12 @@ The final layer of code needed for the eau2 system is the application layer wher
 
 ### Implementation
 
-The first thing required to implement a fully functioning eau2 system is a distributed key-value store that utilizes socket-based networking to communicate between nodes. A Key consists of a String used for searching for the corresponding value, as well as an id representing the ID of the node that the data is stored on. A Value is just a serialized blob of data that can easily be passed through socket connections until it needs to be deserialized into a corresponding object. On each Node of the distributed key-value store, a local key-value store will be implemented in the form of a standard C++ Map from String keys to serialized blob values. The DistributedStore object will manage startup of all Nodes used to store portions of data, handle communication to and from Nodes, and update Nodes of server changes much like our previous server implementation. Additionally it will include new functionality for methods like get, put, and getAndWait. The get method takes a Key object and searches the network of Nodes for the corresponding serialized data and returns it. The put method allows for inserting a Value blob under a new Key in the key-value store. The getAndWait method serves the same purpose as get, but blocks program operation until a value is returned from the distributed store. A distributed array would be implemented utilizing the distributed key-value store described above. 
+The first thing required to implement a fully functioning eau2 system is a distributed key-value store that utilizes socket-based networking to communicate between nodes. A Key consists of a String used for searching for the corresponding value, as well as an id representing the ID of the node that the data is stored on. A Value is just a serialized blob of data that can easily be passed through socket connections until it needs to be deserialized into a corresponding object. 
+
+Each node on the network is essentially a local key-value store with the ability to ask other nodes on the network for data stored in their local key-value stores. Because a Key contains information about what node data is stored on, we are able to send a request to the corresponding node over the network. Currently our KVStore class maintains its own local C++ Map and a size_t representing the index associated with the current application node. The main functionality supported by our KVStore are the methods get, put, and waitAndGet. The get method takes a Key object and searches the network of Nodes for the corresponding serialized data and returns it. The put method allows for inserting a Value blob under a new Key in the key-value store. If the key’s index matches the local store index, the data is stored locally. If not, the data is sent to the correct node for local storage. The getAndWait method serves the same purpose as get, but blocks program operation until a value is returned from the distributed store. This method exists because it may take time for accessing necessary data that is stored on other nodes.
+
+The networking functionality encapsulated within the KVStore class is not activated until a child class of Application calls its run_() method. This method calls the method that will register the KVStore with the server and neighboring nodes, as well as executing whatever application-level functionality it needs to support.
+
 
 ### Uses Cases
 The eau2 system will mainly be used for distributed computing on large datasets. Thus, one would provide the system with a schema on read file, which will be ingested and transformed into a distributed DataFrame. This is particularly useful when the size of the data is too large to be held on one device. The eau2 system allows the data to be broken up into manageable sizes. 
@@ -30,10 +35,12 @@ A second question is how much we can expect data to change once it has been read
 
 ### Status
 A prototype implementation has been created, assembling the various components of the eau2 system. While the majority of the pieces are present, the pieces are not all connected at the moment.
+
 To start, the schema-on-read adapter has been hooked up to our original DataFrame. We can be sure that we are able to read in files, all that needs to be changed is the way a DataFrame stores data. The next step is to change the storage of values in columns to distributed storage across multiple nodes. 
 
 Additionally, the network layer has been built, including the serialization of all messages and data types needed for communication among nodes. However, the actual logic to connect and pass data between nodes has not been implemented. The next step is to get nodes to recognize DataFrame data, as well as be able to provide stored data on request. 
-To connect the DataFrame to the network layer, we also need to implement some of the classes sitting in between, such as DistributedStore and DistributedArray. 
+
+The distributed KVStore as of now has only been prototyped using threading as opposed to our socket-based networking implementation because it allowed us to more easily debug the functionality specific to the KVStore without having to deal with networking issues. Bringing together the full networking functionality and the distributed KVStore will be the primary focus for next week. Currently the code samples provided through milestone three run properly with our system.
 
 	
 
