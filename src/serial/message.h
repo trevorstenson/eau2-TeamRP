@@ -3,18 +3,21 @@
 #include "../string.h"
 #include "array.h"
 #include "serial.h"
+#include "../store/key.h"
+#include "../store/value.h"
+#include "assert.h"
 
 enum class MsgKind { 
     Ack = 'A', 
     Nack = 'N', 
+    Reply = 'T',
     Put = 'P',
-    Reply = 'R',  
     Get = 'G', 
-    WaitAndGet = 'W', 
+    Result = 'X', 
     Status = 'S', 
     Kill = 'K',   
     Register = 'R',  
-    Directory = 'D' 
+    Directory = 'D', 
 };
 
 class Message : public Object, public Serializable  {
@@ -159,6 +162,190 @@ class Nack : public Message {
             return Message::equals(other);
         }
 };
+
+class Put : public Message {
+    public:
+        Key* key_;
+        Value* value_;
+
+        Put() {
+            kind_ = MsgKind::Put;
+        }
+
+        Put(Key* key, Value* value) : Put() {
+            key_ = key;
+            value_ = value;
+        }
+
+        Put(size_t sender, size_t target, size_t id, Key* key, Value* value) : Put(key, value) {
+            sender_ = sender;
+            target_ = target;
+            id_ = id;
+        }
+
+        Put(unsigned char* buffer) {
+            deserialize(buffer);
+        }
+
+        /** Serializes this Put, structure is as follows:
+         * |--8 byte-------|--25 bytes----------|--Unknown bytes---------|--Unknown bytes----|
+         * |--Total bytes--|--Message data------|--Key-------------------|--Value------------|
+         */
+        unsigned char* serialize() {
+            unsigned char* key_buffer = key_->serialize();
+            unsigned char* value_buffer = value_->serialize();
+            size_t key_length = extract_size_t(key_buffer, 0);
+            size_t value_length = extract_size_t(value_buffer, 0);
+            size_t total_length = key_length + value_length + 33;
+            unsigned char* buffer = new unsigned char[total_length];
+            insert_size_t(total_length, buffer, 0);
+            unsigned char* temp_buffer = Message::serialize();
+            copy_unsigned(buffer + 8, temp_buffer, 25);
+            delete temp_buffer;
+            copy_unsigned(buffer + 33, key_buffer, key_length);
+            delete key_buffer;
+            copy_unsigned(buffer + 33 + key_length, value_buffer, value_length);
+            delete value_buffer;
+            return buffer;
+        }
+
+        /** Deserialize, mutating this object to match the buffer */
+        size_t deserialize(unsigned char* buffer) {
+            size_t index = 8 + Message::deserialize(buffer + 8);
+            key_ = new Key();
+            index += key_->deserialize(buffer + index);
+            value_ = new Value();
+            index += value_->deserialize(buffer + index);
+            assert(index == extract_size_t(buffer, 0));
+            return index;
+        }
+
+        bool equals(Object* other) {
+            if (other == this) return true;
+            Put* x = dynamic_cast<Put*>(other);
+            if (x == nullptr) return false;
+            if (!key_->equals(x->key_)) return false;
+            if (!value_->equals(x->value_)) return false;
+            return Message::equals(other);
+        }
+};
+
+class Result : public Message {
+    public:
+        Value* value_;
+
+        Result() {
+            kind_ = MsgKind::Result;
+        }
+
+        Result(Value* value) : Result() {
+            value_ = value;
+        }
+
+        Result(size_t sender, size_t target, size_t id, Value* value) : Result(value) {
+            sender_ = sender;
+            target_ = target;
+            id_ = id;
+        }
+
+        Result(unsigned char* buffer) {
+            deserialize(buffer);
+        }
+
+        /** Serializes this Result, structure is as follows:
+         * |--8 byte-------|--25 bytes----------|--Unknown bytes---------|
+         * |--Total bytes--|--Message data------|--Key-------------------|
+         */
+        unsigned char* serialize() {
+            unsigned char* value_buffer = value_->serialize();
+            size_t value_length = extract_size_t(value_buffer, 0);
+            size_t total_length = value_length + 33;
+            unsigned char* buffer = new unsigned char[total_length];
+            insert_size_t(total_length, buffer, 0);
+            unsigned char* temp_buffer = Message::serialize();
+            copy_unsigned(buffer + 8, temp_buffer, 25);
+            delete temp_buffer;
+            copy_unsigned(buffer + 33, value_buffer, value_length);
+            delete value_buffer;
+            return buffer;
+        }
+
+        /** Deserialize, mutating this object to match the buffer */
+        size_t deserialize(unsigned char* buffer) {
+            size_t index = 8 + Message::deserialize(buffer + 8);
+            value_ = new Value();
+            index += value_->deserialize(buffer + index);
+            assert(index == extract_size_t(buffer, 0));
+            return index;
+        }
+
+        bool equals(Object* other) {
+            if (other == this) return true;
+            Result* x = dynamic_cast<Result*>(other);
+            if (x == nullptr) return false;
+            if (!value_->equals(x->value_)) return false;
+            return Message::equals(other);
+        }
+};
+
+class Get : public Message {
+    public:
+        Key* key_;
+
+        Get() {
+            kind_ = MsgKind::Get;
+        }
+
+        Get(Key* key) : Get() {
+            key_ = key;
+        }
+
+        Get(size_t sender, size_t target, size_t id, Key* key) : Get(key) {
+            sender_ = sender;
+            target_ = target;
+            id_ = id;
+        }
+
+        Get(unsigned char* buffer) {
+            deserialize(buffer);
+        }
+
+        /** Serializes this Get, structure is as follows:
+         * |--8 byte-------|--25 bytes----------|--Unknown bytes---------|
+         * |--Total bytes--|--Message data------|--Key-------------------|
+         */
+        unsigned char* serialize() {
+            unsigned char* key_buffer = key_->serialize();
+            size_t key_length = extract_size_t(key_buffer, 0);
+            size_t total_length = key_length + 33;
+            unsigned char* buffer = new unsigned char[total_length];
+            insert_size_t(total_length, buffer, 0);
+            unsigned char* temp_buffer = Message::serialize();
+            copy_unsigned(buffer + 8, temp_buffer, 25);
+            delete temp_buffer;
+            copy_unsigned(buffer + 33, key_buffer, key_length);
+            delete key_buffer;
+            return buffer;
+        }
+
+        /** Deserialize, mutating this object to match the buffer */
+        size_t deserialize(unsigned char* buffer) {
+            size_t index = 8 + Message::deserialize(buffer + 8);
+            key_ = new Key();
+            index += key_->deserialize(buffer + index);
+            assert(index == extract_size_t(buffer, 0));
+            return index;
+        }
+
+        bool equals(Object* other) {
+            if (other == this) return true;
+            Get* x = dynamic_cast<Get*>(other);
+            if (x == nullptr) return false;
+            if (!key_->equals(x->key_)) return false;
+            return Message::equals(other);
+        }
+};
+
 
 class Kill : public Message {
     public:

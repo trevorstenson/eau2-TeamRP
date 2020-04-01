@@ -62,7 +62,7 @@ class Sys {
   void t_true(bool p) { if (!p) myfail(); }
   void t_false(bool p) { if (p) myfail(); }
 
-  /**
+/**
  * Pads or slices the input string to the input size
  * @param s The string to be padded of shortened
  * @param l The desired size
