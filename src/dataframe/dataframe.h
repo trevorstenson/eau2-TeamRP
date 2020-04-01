@@ -33,7 +33,7 @@ public:
     ~KVStore();
     bool containsKey(Key *k);
     Value *put(Key &k, Value *v);
-    Value *put(Key &k, unsigned char *data);
+    Value *put(Key &k, unsigned char *data, size_t length);
     DataFrame *get(Key &k);
     DataFrame *waitAndGet(Key &k);
 
@@ -445,7 +445,8 @@ public:
             newDf->set(0, i, array[i]);
         }
         //serialize and add df to kvstore
-        kv->put(*key, newDf->serialize());
+        unsigned char* serial = newDf->serialize();
+        kv->put(*key, serial, extract_size_t(serial, 0));
         return newDf;
     }
 
@@ -455,7 +456,8 @@ public:
         delete schemaStr;
         DataFrame *newDf = new DataFrame(*newSchema);
         newDf->set(0, 0, value);
-        kv->put(*key, newDf->serialize());
+        unsigned char* serial = newDf->serialize();
+        kv->put(*key, serial, extract_size_t(serial, 0));
         return newDf;
     }
 
@@ -506,8 +508,8 @@ public:
         size_t buffer_length = 100;
         unsigned char *serial = new unsigned char[buffer_length];
         unsigned char *schm = schema->serialize();
-        size_t index = 16 + schema->width() + 1;
-        copy_unsigned(serial, schm, index);
+        size_t index = 8 + 16 + schema->width() + 1;
+        copy_unsigned(serial + 8, schm, index - 8);
         for (size_t i = 0; i < schema->width(); i++) {
             if (schema->type(i) == 'S') {
                 StringArray *stra = new StringArray(columns[i]);
@@ -543,14 +545,16 @@ public:
                 index += length;
             }
         }
+        insert_size_t(index, serial, 0);
         return serial;
     }
 
     size_t deserialize(unsigned char *serialized) {
-        schema = new Schema(serialized);
+        size_t index = 8;
+        schema = new Schema(serialized + index);
         col_cap = schema->col_cap;
         columns = new Column *[col_cap];
-        size_t index = 16 + schema->width() + 1;
+        index += 16 + schema->width() + 1;
 
         DoubleArray *dbl;
         StringArray *str;
@@ -625,8 +629,8 @@ inline Value *KVStore::put(Key &k, Value *v) {
         return mock_network_[k.node_]->put(k, v);
     }
 }
-inline Value *KVStore::put(Key &k, unsigned char *data) {
-    return put(k, new Value(data));
+inline Value *KVStore::put(Key &k, unsigned char *data, size_t length) {
+    return put(k, new Value(data, length));
 }
 inline DataFrame *KVStore::get(Key &k)
 {

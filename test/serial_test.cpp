@@ -1,7 +1,9 @@
-#include "../src/array.h"
-#include "../src/message.h"
-#include "../src/serial.h"
-#include "../../dataframe.h"
+#include "../src/serial/array.h"
+#include "../src/serial/message.h"
+#include "../src/store/key.h"
+#include "../src/store/value.h"
+#include "../src/serial/serial.h"
+#include "../src/dataframe/dataframe.h"
 
 using namespace std;
 
@@ -314,6 +316,42 @@ void df_test() {
     cout << "*****   Passed: DataFrame   *****\n";
 }
 
+void key_test() {
+    Key* key = new Key("key1", 100);
+    unsigned char* serial = key->serialize();
+    Key* key2 = new Key(serial);
+    assert(key->equals(key2));
+    Key* key3 = new Key("r3y2f9780h43vf43c892qruj4qxdf230q9d", 1232123);
+    unsigned char* serial2 = key3->serialize();
+    Key* key4 = new Key(serial2);
+    assert(key3->equals(key4));
+    assert(!key->equals(key3));
+    cout << "*****   Passed: Key   *****\n";
+}
+
+void value_test() {
+    Value* value = new Value((unsigned char*)"8fjsd&@Dhv;[]&v", 15);
+    unsigned char* serial = value->serialize();
+    Value* value2 = new Value(serial); 
+    assert(value->equals(value2)); //AUG
+    Value* value3 = new Value((unsigned char*)"fhdjksalfhdjskal", 16);
+    unsigned char* serial2 = value3->serialize();
+    Value* value4 = new Value(serial2);
+    assert(value3->equals(value4));
+    assert(!value->equals(value3));
+    cout << "*****   Passed: Value   *****\n";
+}
+
+void put_test() {
+    Key* key = new Key("839210-d21", 2387);
+    Value* value = new Value((unsigned char*)"4jdky032fjcl*!(X", 16);
+    Put* put1 = new Put(2312312, 98094, 8694053, key, value);
+    unsigned char* serial = put1->serialize();
+    Put* put2 = new Put(serial);
+    assert(put1->equals(put2));
+    cout << "*****   Passed: Put   *****\n";
+}
+
 int main() {
     cout << "Running serialization tests...\n";
     size_t_test();
@@ -326,9 +364,12 @@ int main() {
     nack_test();
     status_test();
     register_test();
+    put_test();
     kill_test();
     network_utility();
     schema_test();
     df_test();
+    key_test();
+    value_test();
     cout << "*****   All serialization tests passed   *****\n";
 }
