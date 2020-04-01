@@ -279,7 +279,6 @@ void kill_test() {
     assert(33 == message_length(kill2));
     Kill* kill_d = new Kill(kill2);
     assert(kill->equals(kill_d));
-
     cout << "*****   Passed: Kill   *****\n";
 }
 

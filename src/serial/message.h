@@ -27,6 +27,12 @@ class Message : public Object, public Serializable  {
         size_t target_; // the index of the receiver node
         size_t id_;     // an id t unique within the node
 
+        Message() {
+            sender_ = 0;
+            target_ = 0;
+            id_ = 0;
+        }
+
         /** Serializes this Message, structure is as follows:
          * |--1 byte-|--8 bytes----|--8 bytes each--|--8 bytes--|
          * |--type---|--sender_----|--target_-------|--id_------|
@@ -354,7 +360,7 @@ class Kill : public Message {
             kind_ = MsgKind::Kill;
         }
 
-        Kill(size_t sender, size_t target, size_t id, MsgKind prev_kind) : Kill() {
+        Kill(size_t sender, size_t target, size_t id) : Kill() {
             sender_ = sender;
             target_ = target;
             id_ = id;
@@ -384,6 +390,7 @@ class Kill : public Message {
         }
 
         bool equals(Object* other) {
+            pln("IN KILL EQUALS");
             if (other == this) return true;
             Kill* x = dynamic_cast<Kill*>(other);
             if (x == nullptr) return false;
