@@ -352,6 +352,40 @@ void put_test() {
     cout << "*****   Passed: Put   *****\n";
 }
 
+void get_test() {
+    Key* key = new Key("rh3i412r3-13d43424930d32sxd", 321133);
+    Get* get1 = new Get(23123, 6324, 26745, key);
+    unsigned char* serial = get1->serialize();
+    Get* get2 = new Get(serial);
+    assert(get1->equals(get2));
+
+    Key* key2 = new Key("rh3i413-m4qcn7&^SAD%c3h", 7893);
+    Get* get3 = new Get(8904, 321, 58903, key2);
+    unsigned char* serial2 = get3->serialize();
+    Get* get4 = new Get(serial2);
+    assert(get3->equals(get4));
+
+    assert(!get1->equals(get3));
+    cout << "*****   Passed: Get   *****\n";
+}
+
+void result_test() {
+    Value* value = new Value((unsigned char*)"4jdky032fjcl*!(X", 16);
+    Result* res1 = new Result(2312312, 98094, 8694053, value);
+    unsigned char* serial = res1->serialize();
+    Result* res2 = new Result(serial);
+    assert(res1->equals(res2));
+
+    Value* value2 = new Value((unsigned char*)"zxvchjkl2543asdf809-", 20);
+    Result* res3 = new Result(389025, 5789, 784231, value2);
+    unsigned char* serial2 = res3->serialize();
+    Result* res4 = new Result(serial2);
+    assert(res3->equals(res4));
+
+    assert(!res1->equals(res3));
+    cout << "*****   Passed: Result   *****\n";
+}
+
 int main() {
     cout << "Running serialization tests...\n";
     size_t_test();
@@ -365,6 +399,8 @@ int main() {
     status_test();
     register_test();
     put_test();
+    get_test();
+    result_test();
     kill_test();
     network_utility();
     schema_test();
