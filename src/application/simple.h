@@ -21,15 +21,21 @@ public:
     unsigned char* testBuffer = &testStr[0];
     Value* v = new Value(testBuffer, strlen((char*)testBuffer));
     kv.put(*k, v);
+    Key* k2 = new Key("goto 1", 1);
+    delete DataFrame::fromScalar(k2, &kv, 345);
   }
 
   void receiver() {
-    usleep(6000000);
-    printf("kvmap in node 1:\n");
-    kv.kv_map_.print();
+    //usleep(5500000);
+    //printf("kvmap in node 1:\n");
+    //kv.kv_map_.print();
   }
 
   void others() {
-
+    usleep(5000000);
+    Key* k = new Key("goto 1", 1);
+    DataFrame* d = kv.waitAndGet(*k);
+    pln("printing df");
+    d->print();
   }
 };

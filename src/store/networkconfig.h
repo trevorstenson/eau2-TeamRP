@@ -29,6 +29,7 @@ class NetworkConfig : public Object {
         std::thread* listenToNeighborsThread;
         fd_set neighborReadFds, neighborCurrentFds;
         atomic<bool> running;
+        atomic<bool> waiting;
 
         NetworkConfig() {
             ip_ = nullptr;
@@ -40,6 +41,7 @@ class NetworkConfig : public Object {
             neighborSockets = new int[TEMP_CLIENTS_MAX - 1];
             memset(neighborSockets, NULL, sizeof(neighborSockets));
             running = false;
+            waiting = false;
             listenToServerThread = nullptr;
             listenToNeighborsThread = nullptr;
         }

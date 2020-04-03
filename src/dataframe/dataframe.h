@@ -45,6 +45,7 @@ public:
     KVMap kv_map_;
     size_t idx_;
     NetworkConfig nconfig_;
+    DataFrame* waitAndGetValue;
     KVStore();
     ~KVStore();
     bool containsKey(Key *k);
@@ -65,6 +66,8 @@ public:
     void sendToNeighbor(int fd, unsigned char* msg);
     void handleStatus(int fd, unsigned char* msg);
     void handlePut(int fd, unsigned char* msg);
+    void handleGet(int fd, unsigned char* msg);
+    void handleResult(int fd, unsigned char* msg);
     void listenToServer();
     void handleIncoming(unsigned char* data);
     void shutdown();
@@ -650,8 +653,12 @@ public:
 };
 
 /** KVStore implementation for the previous forward declaration */
-inline KVStore::KVStore() {}
-inline KVStore::~KVStore() {}
+inline KVStore::KVStore() {
+    waitAndGetValue = nullptr;
+}
+inline KVStore::~KVStore() {
+    delete waitAndGetValue;
+}
 inline bool KVStore::containsKey(Key *k) {
     return kv_map_.containsKey(k);
 }
@@ -663,16 +670,15 @@ inline Value *KVStore::put(Key &k, Value *v) {
         // Send the data to the correct node TODO change to real network call
         //return mock_network_[k.node_]->put(k, v);
         Put* p = new Put(idx_, k.node_, 1234, &k, v);
-        printf("k node in kvstore put: %d\n", k.node_);
         // if (nconfig_.neighborSockets[k.node_] != NULL)
-        for (int i = 0; i < TEMP_CLIENTS_MAX; i++) {
-            printf("i: %d ", i);
-            if (nconfig_.neighborSockets[i] != NULL) {
-                printf("not null\n");
-            } else {
-                printf("null:(\n");
-            }
-        }
+        // for (int i = 0; i < TEMP_CLIENTS_MAX; i++) {
+        //     printf("i: %d ", i);
+        //     if (nconfig_.neighborSockets[i] != NULL) {
+        //         printf("not null\n");
+        //     } else {
+        //         printf("null:(\n");
+        //     }
+        // }
         sendToNeighbor(nconfig_.neighborSockets[k.node_], p->serialize());
         
         return nullptr;
@@ -681,15 +687,15 @@ inline Value *KVStore::put(Key &k, Value *v) {
 inline Value *KVStore::put(Key &k, unsigned char *data, size_t length) {
     return put(k, new Value(data, length));
 }
-inline DataFrame *KVStore::get(Key &k)
-{
+inline DataFrame *KVStore::get(Key &k) {
     // data is stored in local kvstore
     if (idx_ == k.node_) {
         Value *received = kv_map_.get(&k);
         return (received == nullptr) ? nullptr : new DataFrame(received->blob_);
     } else {
         // ask the network for data
-        //return mock_network_[k.node_]->get(k);
+        Get* g = new Get(idx_, k.node_, 1234, &k);
+        sendToNeighbor(nconfig_.neighborSockets[k.node_], g->serialize());
         return nullptr;
     }
 }
@@ -699,9 +705,14 @@ inline DataFrame *KVStore::waitAndGet(Key &k) {
         Value *received = kv_map_.get(&k);
         return (received == nullptr) ? nullptr : new DataFrame(received->blob_);
     } else {
-        // ask the network for data TODO change to real network call
-        //return mock_network_[k.node_]->get(k);
-        return nullptr;
+        Get* g = new Get(idx_, k.node_, 1234, &k);
+        sendToNeighbor(nconfig_.neighborSockets[k.node_], g->serialize());
+        nconfig_.waiting = true;
+        //wait for result from neighbors
+        while (nconfig_.waiting);
+        DataFrame* finalResult = waitAndGetValue;
+        waitAndGetValue = nullptr;
+        return finalResult;
     }
 }
 inline void KVStore::setIndex(size_t idx) {
@@ -847,11 +858,20 @@ inline void KVStore::handleNodeMsg(int fd, unsigned char* msg) {
                 handleStatus(fd, msg);
                 break;
             }
+            case MsgKind::Get: {
+                handleGet(fd, msg);
+                break;
+            }
             case MsgKind::Put: {
                 handlePut(fd, msg);
                 break;
             }
-            default: {
+            case MsgKind::Result: {
+                handleResult(fd, msg);
+                break;
+            }
+            default: {  
+                printf("char: %c\n", kind);
                 assert("Unrecognized message" && false);
             }
         }
@@ -881,8 +901,36 @@ inline void KVStore::handlePut(int fd, unsigned char* msg) {
     if (incomingPut->key_->node_ == idx_) {
         kv_map_.put(incomingPut->key_, incomingPut->value_);
         pln("put in local store");
+        //maybe send back ACK later to notify of successful put, get everything working first
     }
-    //delete incomingPut;
+    delete incomingPut;
+}
+
+inline void KVStore::handleResult(int fd, unsigned char* msg) {
+    pln("in handle result");
+    Result* r = new Result(msg);
+    if (r->value_ != nullptr) {
+        DataFrame* result = new DataFrame(r->value_->blob_);
+        waitAndGetValue = result;
+        nconfig_.waiting = false;
+    } else {
+        assert("Error with returned value." && false);
+    }
+}
+
+inline void KVStore::handleGet(int fd, unsigned char* msg) {
+    Get* incomingGet = new Get(msg);
+    pln("in handle get");
+    if (incomingGet->key_->node_ == idx_) {
+        Value* v = kv_map_.get(incomingGet->key_);
+        if (v != nullptr) {
+            Result* r = new Result(v->blob_);
+            sendToNeighbor(nconfig_.neighborSockets[incomingGet->sender_], r->serialize());
+            delete r;
+        } else {
+            pln("Requested value not found locally!");
+        }
+    }
 }
 
 //listens to the server for directory updates

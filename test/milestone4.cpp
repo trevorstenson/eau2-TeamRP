@@ -13,7 +13,7 @@ void network_test() {
     s->serve();
     for (int i = 0; i < NUM_THREADS; i++) {
         Simple* sa = new Simple(i);
-        sa->kv.configure("127.0.0.1", 47500 + i, "127.0.0.1", 8080);
+        sa->kv.configure("127.0.0.1", 33090 + i, "127.0.0.1", 8080);
         threads[i] = new std::thread(&Simple::run_, sa);
         usleep(1000000);
     }
