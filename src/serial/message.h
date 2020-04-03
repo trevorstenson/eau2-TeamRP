@@ -583,6 +583,8 @@ class Directory : public Message {
             for (size_t i = 0; i < ports_cap_; i++) {
                 if (addresses->vals_[i] != nullptr) {
                     StrBuff* sb = new StrBuff();
+                    sb->c(i);
+                    sb->c(":");
                     sb->c(addresses->vals_[i]->c_str());
                     sb->c(":");
                     sb->c(ports[i]);

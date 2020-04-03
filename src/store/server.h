@@ -104,7 +104,7 @@ class Server : public Object {
                                     if ((sockets[j] = accept(master_socket, (struct sockaddr*)&address, (socklen_t*)&addrlen)) < 0) {
                                         assert("Error accepting new socket." && false);
                                     }
-                                    printf("New connection , socket fd is %d, port : %d, host: %s\n", sockets[j], ntohs(address.sin_port), inet_ntoa(address.sin_addr));
+                                    //printf("New connection , socket fd is %d, port : %d, host: %s\n", sockets[j], ntohs(address.sin_port), inet_ntoa(address.sin_addr));
                                     FD_SET(sockets[j], &currentfds);
                                     break;
                                 }
@@ -155,7 +155,7 @@ class Server : public Object {
                         assert("Unrecognized message type" && false);
                     }
                 }
-                nodeDir->print();
+                //nodeDir->print();
             }
         }
 

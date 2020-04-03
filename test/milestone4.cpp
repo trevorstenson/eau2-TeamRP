@@ -17,7 +17,7 @@ void network_test() {
         threads[i] = new std::thread(&Simple::run_, sa);
         usleep(1000000);
     }
-    usleep(3000000);
+    usleep(8000000);
     s->shutdown();
     for (int i = 0; i < NUM_THREADS; i++) {
         threads[i]->join();

@@ -64,6 +64,7 @@ public:
     void handleNodeMsg(int fd, unsigned char* msg);
     void sendToNeighbor(int fd, unsigned char* msg);
     void handleStatus(int fd, unsigned char* msg);
+    void handlePut(int fd, unsigned char* msg);
     void listenToServer();
     void handleIncoming(unsigned char* data);
     void shutdown();
@@ -661,6 +662,18 @@ inline Value *KVStore::put(Key &k, Value *v) {
     } else {
         // Send the data to the correct node TODO change to real network call
         //return mock_network_[k.node_]->put(k, v);
+        Put* p = new Put(&k, v);
+        printf("k node in kvstore put: %d\n", k.node_);
+        //if (nconfig_.neighborSockets[k.node_] != NULL)
+        // for (int i = 0; i < TEMP_CLIENTS_MAX; i++) {
+        //     printf("i: %d ", i);
+        //     if (nconfig_.neighborSockets[i] != NULL) {
+        //         printf("not null\n");
+        //     } else {
+        //         printf("null:(\n");
+        //     }
+        // }
+        //sendToNeighbor(nconfig_.neighborSockets[k.node_], p->serialize());
         
         return nullptr;
     }
@@ -772,7 +785,7 @@ inline void KVStore::initializePeerToPeer() {
     if (listen(nconfig_.clientSocket_, TEMP_CLIENTS_MAX - 1) < 0) {
         assert("Failed to listen." && false);
     }
-    p("Listening to neighbors on port ").pln(nconfig_.port_);
+    //p("Listening to neighbors on port ").pln(nconfig_.port_);
 }
 
 //listens to incoming and active Node connections
@@ -834,6 +847,10 @@ inline void KVStore::handleNodeMsg(int fd, unsigned char* msg) {
                 handleStatus(fd, msg);
                 break;
             }
+            case MsgKind::Put: {
+                handlePut(fd, msg);
+                break;
+            }
             default: {
                 assert("Unrecognized message" && false);
             }
@@ -854,6 +871,19 @@ inline void KVStore::handleStatus(int fd, unsigned char* msg) {
     Status* incomingStatus = new Status(msg);
     p("Received on ").p(nconfig_.ip_->c_str()).p(":").p(nconfig_.port_).p(": ").pln(incomingStatus->msg_->c_str());
     delete incomingStatus;
+}
+
+//handler for status messages
+inline void KVStore::handlePut(int fd, unsigned char* msg) {
+    Put* incomingPut = new Put(msg);
+    std::cout << "COUT IDX: " << idx_ << std::endl; 
+    printf("New put message on %zu\n", idx_);
+    printf("put|%s|%d|%s\n",incomingPut->key_->name_->c_str(), incomingPut->key_->node_, incomingPut->value_->blob_);
+    if (incomingPut->key_->node_ == idx_) {
+        kv_map_.put(incomingPut->key_, incomingPut->value_);
+        pln("put in local store");
+    }
+    //delete incomingPut;
 }
 
 //listens to the server for directory updates
@@ -916,6 +946,8 @@ inline void KVStore::closeServerConnection() {
 //updated the node directory and opens connections with all other nodes
 inline void KVStore::updateConnections(unsigned char* data) {
     nconfig_.nodeDir = new Directory(data);
+    // if (idx_ == 0)
+    //     nconfig_.nodeDir->print();
     createNeighborConnections();
     //the following method was for demo/debugging purposes
     //greetAllNeighbors();
@@ -940,6 +972,17 @@ inline void KVStore::createNeighborConnections() {
             }
         }
     }
+    if (idx_ == 0) {
+        printf("VALIDITY CHECK:\n");
+    for (int i = 0; i < nconfig_.nodeDir->ports_len_; i++) {
+        printf("i: %d ", i);
+        if (nconfig_.neighborSockets[i] == NULL)
+            printf("is null\n");
+        else {
+            printf("%s:%zu\n", nconfig_.nodeDir->addresses->vals_[i]->c_str(), nconfig_.nodeDir->ports[i]);
+        }
+    }
+    }
 }
 
 //greets all neighbors within the node directory with a status message
@@ -947,13 +990,17 @@ inline void KVStore::createNeighborConnections() {
 inline void KVStore::greetAllNeighbors() {
     for (int i = 0; i < nconfig_.nodeDir->ports_len_; i++) {
         if (nconfig_.neighborSockets[i] != NULL) {
+            printf("%d: not null socket: %d\n", idx_, i);
             StrBuff* sb = new StrBuff();
             sb->c("Hello from ");
             sb->c(nconfig_.ip_->c_str());
             sb->c(":");
             sb->c(nconfig_.port_);
+            sb->c("      ");
+            sb->c("directed to: ");
+            sb->c(nconfig_.nodeDir->ports[i]);
             Status* greetStatus = new Status(sb->get());
-            sendToNeighbor(nconfig_.neighborSockets[i], greetStatus->serialize());
+            //sendToNeighbor(nconfig_.neighborSockets[i], greetStatus->serialize());
             delete sb;
             delete greetStatus;
         }
@@ -964,7 +1011,7 @@ inline void KVStore::greetAllNeighbors() {
 inline void KVStore::handleAck(Ack* ack) {
     switch (ack->previous_kind) {
         case MsgKind::Register: {
-            pln("Successfully registered!");
+            //pln("Successfully registered!");
             if (nconfig_.listenToNeighborsThread == nullptr) {
                 //launch thread to listen to neighbors
                 nconfig_.listenToNeighborsThread = new std::thread(&KVStore::listenToNeighbors, this);

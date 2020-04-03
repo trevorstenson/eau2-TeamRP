@@ -349,6 +349,15 @@ class KVMap : public Map {
         virtual Value* remove(Key* key) {
             return dynamic_cast<Value*>(Map::remove(key));
         }
+
+        void print() {
+            for (int i = 0; i < len_; i++) {
+                printf("%d: key: %s|%d\nvalue: %s", i, 
+                dynamic_cast<Key*>(values_[i]->key_)->name_->c_str(),
+                dynamic_cast<Key*>(values_[i]->key_)->node_,
+                dynamic_cast<Value*>(values_[i]->value_)->blob_);
+            }
+        }
 };
 
 /**
