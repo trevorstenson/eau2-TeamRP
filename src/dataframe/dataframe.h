@@ -662,18 +662,18 @@ inline Value *KVStore::put(Key &k, Value *v) {
     } else {
         // Send the data to the correct node TODO change to real network call
         //return mock_network_[k.node_]->put(k, v);
-        Put* p = new Put(&k, v);
+        Put* p = new Put(idx_, k.node_, 1234, &k, v);
         printf("k node in kvstore put: %d\n", k.node_);
-        //if (nconfig_.neighborSockets[k.node_] != NULL)
-        // for (int i = 0; i < TEMP_CLIENTS_MAX; i++) {
-        //     printf("i: %d ", i);
-        //     if (nconfig_.neighborSockets[i] != NULL) {
-        //         printf("not null\n");
-        //     } else {
-        //         printf("null:(\n");
-        //     }
-        // }
-        //sendToNeighbor(nconfig_.neighborSockets[k.node_], p->serialize());
+        // if (nconfig_.neighborSockets[k.node_] != NULL)
+        for (int i = 0; i < TEMP_CLIENTS_MAX; i++) {
+            printf("i: %d ", i);
+            if (nconfig_.neighborSockets[i] != NULL) {
+                printf("not null\n");
+            } else {
+                printf("null:(\n");
+            }
+        }
+        sendToNeighbor(nconfig_.neighborSockets[k.node_], p->serialize());
         
         return nullptr;
     }
@@ -772,7 +772,7 @@ inline void KVStore::initializePeerToPeer() {
     nconfig_.clientaddr.sin_port = htons(nconfig_.port_);
 
     //bind to user provided client port for listening to neighbors
-    if (::bind(nconfig_.clientSocket_, (struct sockaddr *)&nconfig_.clientaddr, sizeof(nconfig_.clientaddr)) < 0) { 
+    if (bind(nconfig_.clientSocket_, (struct sockaddr *)&nconfig_.clientaddr, sizeof(nconfig_.clientaddr)) < 0) { 
         assert("Error binding client socket." && false);
     }
 
@@ -876,7 +876,6 @@ inline void KVStore::handleStatus(int fd, unsigned char* msg) {
 //handler for status messages
 inline void KVStore::handlePut(int fd, unsigned char* msg) {
     Put* incomingPut = new Put(msg);
-    std::cout << "COUT IDX: " << idx_ << std::endl; 
     printf("New put message on %zu\n", idx_);
     printf("put|%s|%d|%s\n",incomingPut->key_->name_->c_str(), incomingPut->key_->node_, incomingPut->value_->blob_);
     if (incomingPut->key_->node_ == idx_) {
@@ -946,8 +945,6 @@ inline void KVStore::closeServerConnection() {
 //updated the node directory and opens connections with all other nodes
 inline void KVStore::updateConnections(unsigned char* data) {
     nconfig_.nodeDir = new Directory(data);
-    // if (idx_ == 0)
-    //     nconfig_.nodeDir->print();
     createNeighborConnections();
     //the following method was for demo/debugging purposes
     //greetAllNeighbors();
@@ -964,8 +961,13 @@ inline void KVStore::createNeighborConnections() {
                 }
                 struct sockaddr_in neighboraddr;
                 neighboraddr.sin_family = AF_INET;
-                neighboraddr.sin_addr.s_addr = inet_addr(nconfig_.ip_->c_str());
-                neighboraddr.sin_port = htons(nconfig_.port_);
+                // neighboraddr.sin_addr.s_addr = inet_addr(nconfig_.ip_->c_str());
+                // neighboraddr.sin_port = htons(nconfig_.port_);
+                printf("BEFORE CONNECT IP: %s:%zu\n", 
+                nconfig_.nodeDir->addresses->vals_[i]->c_str(),
+                nconfig_.nodeDir->ports[i]);
+                neighboraddr.sin_addr.s_addr = inet_addr(nconfig_.nodeDir->addresses->vals_[i]->c_str());
+                neighboraddr.sin_port = htons(nconfig_.nodeDir->ports[i]);
                 if (connect(nconfig_.neighborSockets[i], (struct sockaddr *)&neighboraddr, sizeof(neighboraddr)) < 0) {
                     assert("Could not connect to neighbor." && false);
                 }
@@ -1000,7 +1002,7 @@ inline void KVStore::greetAllNeighbors() {
             sb->c("directed to: ");
             sb->c(nconfig_.nodeDir->ports[i]);
             Status* greetStatus = new Status(sb->get());
-            //sendToNeighbor(nconfig_.neighborSockets[i], greetStatus->serialize());
+            sendToNeighbor(nconfig_.neighborSockets[i], greetStatus->serialize());
             delete sb;
             delete greetStatus;
         }
