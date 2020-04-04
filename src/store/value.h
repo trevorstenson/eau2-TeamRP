@@ -40,6 +40,7 @@ class Value : public Object {
             blob_length_ = extract_size_t(serialized, 8);
             blob_ = new unsigned char[blob_length_];
             copy_unsigned(blob_, serialized + 16, blob_length_);
+            printf("IN VALUE DESERIALIZE: %s, len: %zu, bloblen: %d\n", blob_, length, blob_length_);
             assert(length == 16 + blob_length_);
             return length;
         }

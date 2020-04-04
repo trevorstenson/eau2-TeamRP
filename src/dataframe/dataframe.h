@@ -670,17 +670,7 @@ inline Value *KVStore::put(Key &k, Value *v) {
         // Send the data to the correct node TODO change to real network call
         //return mock_network_[k.node_]->put(k, v);
         Put* p = new Put(idx_, k.node_, 1234, &k, v);
-        // if (nconfig_.neighborSockets[k.node_] != NULL)
-        // for (int i = 0; i < TEMP_CLIENTS_MAX; i++) {
-        //     printf("i: %d ", i);
-        //     if (nconfig_.neighborSockets[i] != NULL) {
-        //         printf("not null\n");
-        //     } else {
-        //         printf("null:(\n");
-        //     }
-        // }
         sendToNeighbor(nconfig_.neighborSockets[k.node_], p->serialize());
-        
         return nullptr;
     }
 }
@@ -709,6 +699,7 @@ inline DataFrame *KVStore::waitAndGet(Key &k) {
         sendToNeighbor(nconfig_.neighborSockets[k.node_], g->serialize());
         nconfig_.waiting = true;
         //wait for result from neighbors
+        printf("waiting in waitandget!\n");
         while (nconfig_.waiting);
         DataFrame* finalResult = waitAndGetValue;
         waitAndGetValue = nullptr;
@@ -896,11 +887,11 @@ inline void KVStore::handleStatus(int fd, unsigned char* msg) {
 //handler for status messages
 inline void KVStore::handlePut(int fd, unsigned char* msg) {
     Put* incomingPut = new Put(msg);
-    printf("New put message on %zu\n", idx_);
-    printf("put|%s|%d|%s\n",incomingPut->key_->name_->c_str(), incomingPut->key_->node_, incomingPut->value_->blob_);
+    //printf("New put message on %zu\n", idx_);
+    //printf("put|%s|%d|%s\n",incomingPut->key_->name_->c_str(), incomingPut->key_->node_, incomingPut->value_->blob_);
     if (incomingPut->key_->node_ == idx_) {
         kv_map_.put(incomingPut->key_, incomingPut->value_);
-        pln("put in local store");
+        //pln("put in local store");
         //maybe send back ACK later to notify of successful put, get everything working first
     }
     delete incomingPut;
@@ -1011,9 +1002,9 @@ inline void KVStore::createNeighborConnections() {
                 neighboraddr.sin_family = AF_INET;
                 // neighboraddr.sin_addr.s_addr = inet_addr(nconfig_.ip_->c_str());
                 // neighboraddr.sin_port = htons(nconfig_.port_);
-                printf("BEFORE CONNECT IP: %s:%zu\n", 
-                nconfig_.nodeDir->addresses->vals_[i]->c_str(),
-                nconfig_.nodeDir->ports[i]);
+                // printf("BEFORE CONNECT IP: %s:%zu\n", 
+                // nconfig_.nodeDir->addresses->vals_[i]->c_str(),
+                // nconfig_.nodeDir->ports[i]);
                 neighboraddr.sin_addr.s_addr = inet_addr(nconfig_.nodeDir->addresses->vals_[i]->c_str());
                 neighboraddr.sin_port = htons(nconfig_.nodeDir->ports[i]);
                 if (connect(nconfig_.neighborSockets[i], (struct sockaddr *)&neighboraddr, sizeof(neighboraddr)) < 0) {
@@ -1022,17 +1013,16 @@ inline void KVStore::createNeighborConnections() {
             }
         }
     }
-    if (idx_ == 0) {
-        printf("VALIDITY CHECK:\n");
-    for (int i = 0; i < nconfig_.nodeDir->ports_len_; i++) {
-        printf("i: %d ", i);
-        if (nconfig_.neighborSockets[i] == NULL)
-            printf("is null\n");
-        else {
-            printf("%s:%zu\n", nconfig_.nodeDir->addresses->vals_[i]->c_str(), nconfig_.nodeDir->ports[i]);
-        }
-    }
-    }
+    // if (idx_ == 0) {
+    //     printf("VALIDITY CHECK:\n");
+    // for (int i = 0; i < nconfig_.nodeDir->ports_len_; i++) {
+    //     printf("i: %d ", i);
+    //     if (nconfig_.neighborSockets[i] == NULL)
+    //         printf("is null\n");
+    //     else {
+    //         printf("%s:%zu\n", nconfig_.nodeDir->addresses->vals_[i]->c_str(), nconfig_.nodeDir->ports[i]);
+    //     }
+    // }
 }
 
 //greets all neighbors within the node directory with a status message
