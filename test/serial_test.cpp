@@ -23,7 +23,7 @@ void size_t_test() {
     size_t c_deserial = deserialize_size_t(c_serial);
     assert(c == c_deserial);
 
-    size_t d = 0;
+    size_t d = 10000000000000;
     unsigned char* d_serial = serialize_size_t(d);
     size_t d_deserial = deserialize_size_t(d_serial);
     assert(d == d_deserial);

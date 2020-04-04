@@ -774,7 +774,7 @@ inline void KVStore::initializePeerToPeer() {
     nconfig_.clientaddr.sin_port = htons(nconfig_.port_);
 
     //bind to user provided client port for listening to neighbors
-    if (bind(nconfig_.clientSocket_, (struct sockaddr *)&nconfig_.clientaddr, sizeof(nconfig_.clientaddr)) < 0) { 
+    if (::bind(nconfig_.clientSocket_, (struct sockaddr *)&nconfig_.clientaddr, sizeof(nconfig_.clientaddr)) < 0) { 
         assert("Error binding client socket." && false);
     }
 
