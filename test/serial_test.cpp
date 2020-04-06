@@ -23,7 +23,7 @@ void size_t_test() {
     size_t c_deserial = deserialize_size_t(c_serial);
     assert(c == c_deserial);
 
-    size_t d = 0;
+    size_t d = 10000000000000;
     unsigned char* d_serial = serialize_size_t(d);
     size_t d_deserial = deserialize_size_t(d_serial);
     assert(d == d_deserial);
@@ -279,7 +279,6 @@ void kill_test() {
     assert(33 == message_length(kill2));
     Kill* kill_d = new Kill(kill2);
     assert(kill->equals(kill_d));
-
     cout << "*****   Passed: Kill   *****\n";
 }
 

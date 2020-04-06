@@ -1,31 +1,34 @@
 build:
 	#python3 gen.py
 	#cp test/*.sor .
-	g++ -g -pthread -w -std=c++11 test/serial_test.cpp -o serial_test
+	#g++ -g -pthread -w -std=c++11 test/serial_test.cpp -o serial_test
 	#g++ -g -pthread -std=c++11 test/util_test.cpp -o util_test
 	#g++ -g -pthread -std=c++11 test/sor_test.cpp -o sor_test
 	#g++ -g -pthread -std=c++11 test/df_test.cpp -o df_test
 	#g++ -g -pthread -std=c++11 test/milestone2.cpp -o m2
 	#g++ -g -pthread -w -std=c++11 test/milestone3.cpp -o m3
+	g++ -g -pthread -w -std=c++11 test/milestone4.cpp -o m4
 
 test:
-	./serial_test
+	#./serial_test
 	#./util_test
 	#./sor_test
 	#./df_test
 	#./m2
 	#./m3
+	./m4
 
 valgrind:
 	valgrind --leak-check=full ./df_test
 
 clean:
-	rm ./serial_test
+	#rm ./serial_test
 	#rm ./util_test
 	#rm ./sor_test
 	#rm ./df_test
 	#rm ./m2
 	#rm ./m3
+	rm ./m4
 	#rm test/*.sor
 	#rm ./*.sor
 	

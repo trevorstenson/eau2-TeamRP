@@ -16,10 +16,6 @@ class Application : public Object {
 
         virtual void run_() { }
 
-        void setMockNetwork(KVStore** mockNetwork) {
-            kv.setMockNetwork(mockNetwork);
-        }
-
         size_t this_node() {
             return idx_;
         }

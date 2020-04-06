@@ -25,6 +25,11 @@ class Value : public Object {
             delete blob_;
         }
 
+        /**
+         * Serializes this value. Structure is as follows:
+         * |--8 bytes--------------|-8 bytes------|-X bytes-|
+         * |-Total length in bytes-|-blob_length_-|-blob_---|
+         */
         unsigned char *serialize() {
             //TODO this cast may need to be changed
             size_t length = 16 + blob_length_;

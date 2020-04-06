@@ -19,9 +19,9 @@ class Serializable {
 unsigned char* serialize_size_t(size_t s) {
     //Initialize new array to hold bytes
     unsigned char* serialization = new unsigned char[8];
-    //Convert to byte array 
-    for (int i = 0; i < 8; i++)
-       serialization[i] = (s >> (i * 8));
+    void* temp1 = serialization;
+    size_t* temp2 = (size_t*)temp1;
+    temp2[0] = s;
     return serialization;
 }
 
@@ -35,10 +35,9 @@ void insert_size_t(size_t s, unsigned char* buffer, size_t offset) {
 /** Extract a size_t from a buffer at the given offset */
 size_t extract_size_t(unsigned char* buffer, size_t offset) {
     size_t val = 0;
-    //Bitwise or on bytes. Shifted to correct position
-    for (size_t i = 0; i < 8; i++) 
-        val = val | (buffer[i + offset] << (i * 8));
-    return val;
+    void* temp1 = buffer + offset;
+    size_t* temp2 = (size_t*)temp1;
+    return temp2[0];
 }
 
 size_t deserialize_size_t(unsigned char* buffer) {
