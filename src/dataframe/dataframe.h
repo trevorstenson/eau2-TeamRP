@@ -12,6 +12,7 @@
 #include <mutex>
 #include <functional>
 #include <string>
+#include "visitor.h"
 
 //KVStore
 #include "../map.h"
@@ -499,6 +500,17 @@ public:
         return newDf;
     }
 
+    static DataFrame *fromVisitor(Key *key, KVStore *kv, const char* type, Visitor* v) {
+        Schema* newSchema = new Schema(type);
+        Row* r = new Row(*newSchema);
+        v.visit(*r);
+        DataFrame* newDf = new DataFrame(*newSchema);
+        newDf->add_row(*r);
+        unsigned char* serial = newDf->serialize();
+        kv->put(*key, serial, extract_size_t(serial, 0));
+        return newDf;
+    }
+
     /** Print the dataframe in SoR format to standard output. */
     void print() {
         for (int i = 0; i < schema->length(); i++) {
@@ -699,7 +711,6 @@ inline DataFrame *KVStore::waitAndGet(Key &k) {
         sendToNeighbor(nconfig_.neighborSockets[k.node_], g->serialize());
         nconfig_.waiting = true;
         //wait for result from neighbors
-        printf("waiting in waitandget!\n");
         while (nconfig_.waiting);
         DataFrame* finalResult = waitAndGetValue;
         waitAndGetValue = nullptr;
@@ -862,7 +873,6 @@ inline void KVStore::handleNodeMsg(int fd, unsigned char* msg) {
                 break;
             }
             default: {  
-                printf("char: %c\n", kind);
                 assert("Unrecognized message" && false);
             }
         }
@@ -915,7 +925,7 @@ inline void KVStore::handleGet(int fd, unsigned char* msg) {
     if (incomingGet->key_->node_ == idx_) {
         Value* v = kv_map_.get(incomingGet->key_);
         if (v != nullptr) {
-            Result* r = new Result(v->blob_);
+            Result* r = new Result(v);
             sendToNeighbor(nconfig_.neighborSockets[incomingGet->sender_], r->serialize());
             delete r;
         } else {

@@ -22,7 +22,7 @@ public:
     Value* v = new Value(testBuffer, strlen((char*)testBuffer));
     kv.put(*k, v);
     Key* k2 = new Key("goto 1", 1);
-    delete DataFrame::fromScalar(k2, &kv, 345);
+    delete DataFrame::fromScalar(k2, &kv, 350);
   }
 
   void receiver() {

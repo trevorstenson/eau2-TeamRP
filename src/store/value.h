@@ -17,7 +17,6 @@ class Value : public Object {
         }
 
         Value(unsigned char* blob, size_t blob_length) {
-            std::cout << "Creating value of size: " << blob_length << endl << std::flush;
             blob_length_ = blob_length;
             blob_ = blob;
         }
@@ -38,7 +37,6 @@ class Value : public Object {
             insert_size_t(length, buffer, 0);
             insert_size_t(blob_length_, buffer, 8);
             copy_unsigned(buffer + 16, blob_, blob_length_);
-            printf("IN VALUE SERIALIZE: len: %zu, bloblen: %d\n", length, blob_length_);
             return buffer;
         }
 
@@ -47,7 +45,6 @@ class Value : public Object {
             blob_length_ = extract_size_t(serialized, 8);
             blob_ = new unsigned char[blob_length_];
             copy_unsigned(blob_, serialized + 16, blob_length_);
-            printf("IN VALUE DESERIALIZE: %s, len: %zu, bloblen: %d\n", blob_, length, blob_length_);
             assert(length == 16 + blob_length_);
             return length;
         }
