@@ -32,6 +32,7 @@
 #include <netinet/in.h>  
 #include <sys/time.h>
 #include <sys/ioctl.h>
+#include <vector>
 
 #define MAX_THREADS 8
 #define MIN_LINES 1000
@@ -49,6 +50,7 @@ public:
     size_t idx_;
     NetworkConfig nconfig_;
     DataFrame* waitAndGetValue;
+    vector<Get*>* getRequests;  
     KVStore();
     ~KVStore();
     bool containsKey(Key *k);
@@ -70,6 +72,7 @@ public:
     void handleStatus(int fd, unsigned char* msg);
     void handlePut(int fd, unsigned char* msg);
     void handleGet(int fd, unsigned char* msg);
+    void updateRequests();
     void handleResult(int fd, unsigned char* msg);
     void listenToServer();
     void handleIncoming(unsigned char* data);
@@ -672,6 +675,7 @@ inline KVStore::KVStore() {
 }
 inline KVStore::~KVStore() {
     delete waitAndGetValue;
+    delete getRequests;
 }
 inline bool KVStore::containsKey(Key *k) {
     return kv_map_.containsKey(k);
@@ -704,12 +708,17 @@ inline DataFrame *KVStore::get(Key &k) {
     }
 }
 inline DataFrame *KVStore::waitAndGet(Key &k) {
+    pln("ENTERING WAITANDGET METHOD");
     // data is stored in local kvstore
     if (idx_ == k.node_) {
         Value *received = kv_map_.get(&k);
         return (received == nullptr) ? nullptr : new DataFrame(received->blob_);
     } else {
         Get* g = new Get(idx_, k.node_, 1234, &k);
+        while (nconfig_.neighborSockets[k.node_] == NULL) {
+            pln("waiting for socket to not be null");
+        }
+        pln("not null anymore");
         sendToNeighbor(nconfig_.neighborSockets[k.node_], g->serialize());
         nconfig_.waiting = true;
         //wait for result from neighbors
@@ -931,7 +940,32 @@ inline void KVStore::handleGet(int fd, unsigned char* msg) {
             sendToNeighbor(nconfig_.neighborSockets[incomingGet->sender_], r->serialize());
             delete r;
         } else {
-            pln("Requested value not found locally!");
+            pln("get being added to vector");
+            getRequests->push_back(incomingGet);
+            if (nconfig_.dataRequestsThread == nullptr) {
+                nconfig_.dataRequestsThread = new std::thread(&KVStore::updateRequests, this);
+            }
+        }
+    }
+}
+
+inline void KVStore::updateRequests() {
+    while (nconfig_.running) {
+        usleep(1000000);
+        int count = 0;
+        for (auto i = getRequests->begin(); i != getRequests->end(); ++i) {
+            pln("checking get requests!");
+            Value* v = kv_map_.get((*i)->key_);
+            if (v != nullptr) {
+                Result* r = new Result(v);
+                while (nconfig_.neighborSockets[(*i)->sender_] == NULL) {
+                    pln("null socket, waiting");
+                }
+                sendToNeighbor(nconfig_.neighborSockets[(*i)->sender_], r->serialize());
+                delete r;
+                getRequests->erase(getRequests->begin() + count);
+            }
+            count++;
         }
     }
 }
@@ -1025,16 +1059,6 @@ inline void KVStore::createNeighborConnections() {
             }
         }
     }
-    // if (idx_ == 0) {
-    //     printf("VALIDITY CHECK:\n");
-    // for (int i = 0; i < nconfig_.nodeDir->ports_len_; i++) {
-    //     printf("i: %d ", i);
-    //     if (nconfig_.neighborSockets[i] == NULL)
-    //         printf("is null\n");
-    //     else {
-    //         printf("%s:%zu\n", nconfig_.nodeDir->addresses->vals_[i]->c_str(), nconfig_.nodeDir->ports[i]);
-    //     }
-    // }
 }
 
 //greets all neighbors within the node directory with a status message

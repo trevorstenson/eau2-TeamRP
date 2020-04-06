@@ -40,7 +40,7 @@ public:
  
     /** Creates the reader and opens the file for reading.  */
     FileReader() {
-        file_ = fopen("wordcount.txt", "r");
+        file_ = fopen("test/wordcount.txt", "r");
         if (file_ == nullptr) assert("Cannot open file wordcount.txt");
         buf_ = new char[BUFSIZE + 1]; //  null terminator
         fillBuffer_();

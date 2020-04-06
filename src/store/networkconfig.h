@@ -29,6 +29,7 @@ class NetworkConfig : public Object {
         unsigned char* neighborBuffer;
         std::thread* listenToServerThread;
         std::thread* listenToNeighborsThread;
+        std::thread* dataRequestsThread;
         fd_set neighborReadFds, neighborCurrentFds;
         atomic<bool> running;
         atomic<bool> waiting;
@@ -46,6 +47,7 @@ class NetworkConfig : public Object {
             waiting = false;
             listenToServerThread = nullptr;
             listenToNeighborsThread = nullptr;
+            dataRequestsThread = nullptr;
         }
 
         ~NetworkConfig() {
