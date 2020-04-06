@@ -36,6 +36,7 @@
 
 #define MAX_THREADS 8
 #define MIN_LINES 1000
+#define DEBUG false
 
 #define BUFF_SIZE 1024
 #define TEMP_CLIENTS_MAX 30
@@ -710,7 +711,6 @@ inline DataFrame *KVStore::get(Key &k) {
     }
 }
 inline DataFrame *KVStore::waitAndGet(Key &k) {
-    pln("ENTERING WAITANDGET METHOD");
     // data is stored in local kvstore
     if (idx_ == k.node_) {
         Value *received = kv_map_.get(&k);
@@ -719,9 +719,9 @@ inline DataFrame *KVStore::waitAndGet(Key &k) {
         Get* g = new Get(idx_, k.node_, 1234, &k);
         while (nconfig_.neighborSockets[k.node_] == NULL) {
             usleep(250000);
-            pln("waiting for socket to not be null");
+            if (DEBUG) pln("waiting for socket to not be null");
         }
-        pln("not null anymore");
+        if (DEBUG) pln("not null anymore");
         sendToNeighbor(nconfig_.neighborSockets[k.node_], g->serialize(), "in waitandget");
         nconfig_.waiting = true;
         //wait for result from neighbors
@@ -927,7 +927,7 @@ inline void KVStore::handlePut(int fd, unsigned char* msg) {
 }
 
 inline void KVStore::handleResult(int fd, unsigned char* msg) {
-    pln("in handle result");
+    if (DEBUG) pln("in handle result");
     Result* r = new Result(msg);
     if (r->value_ != nullptr) {
         DataFrame* result = new DataFrame(r->value_->blob_);
@@ -940,7 +940,7 @@ inline void KVStore::handleResult(int fd, unsigned char* msg) {
 
 inline void KVStore::handleGet(int fd, unsigned char* msg) {
     Get* incomingGet = new Get(msg);
-    pln("in handle get");
+    if (DEBUG)  pln("in handle get");
     if (incomingGet->key_->node_ == idx_) {
         Value* v = kv_map_.get(incomingGet->key_);
         if (v != nullptr) {
@@ -948,7 +948,7 @@ inline void KVStore::handleGet(int fd, unsigned char* msg) {
             sendToNeighbor(nconfig_.neighborSockets[incomingGet->sender_], r->serialize());
             delete r;
         } else {
-            pln("get being added to vector");
+            if (DEBUG) pln("get being added to vector");
             getRequests->push_back(incomingGet);
             if (nconfig_.dataRequestsThread == nullptr) {
                 nconfig_.dataRequestsThread = new std::thread(&KVStore::updateRequests, this);
@@ -963,15 +963,15 @@ inline void KVStore::updateRequests() {
         Get* i;
         for (int count = 0; count < getRequests->size(); ++count) {
             i = getRequests->at(count);
-            pln("Checking get requests!");
-            cout << "Getting i key" << endl << std::flush;
+            if (DEBUG) pln("Checking get requests!");
+            if (DEBUG) cout << "Getting i key" << endl << std::flush;
             Value* v = kv_map_.get(i->key_);
-            cout << "Got i key" << endl << std::flush;
+            if (DEBUG) cout << "Got i key" << endl << std::flush;
             if (v != nullptr) {
-                cout << "V no longer nullptr" << std::flush;
+                if (DEBUG) cout << "V no longer nullptr" << std::flush;
                 Result* r = new Result(v);
                 while (nconfig_.neighborSockets[i->sender_] == NULL) {
-                    pln("null socket, waiting");
+                    if (DEBUG) pln("null socket, waiting");
                 }
                 sendToNeighbor(nconfig_.neighborSockets[i->sender_], r->serialize(), "in update requests");
                 delete r;

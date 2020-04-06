@@ -180,7 +180,7 @@ public:
    *  which then joins them one by one. */
   Key* mk_key(size_t idx) {
       Key * k = kbuf.c(idx)->get();
-      printf("Created key %s", k->c_str());
+      //printf("Created key %s", k->c_str());
       return k;
   }
  
@@ -190,11 +190,12 @@ public:
     p("Node ").p(idx_).pln(": starting local count...");
     SIMap map;
     Adder add(map);
-    //words->local_map(add);
+    //words->localmap(add);
     words->map(add);
     delete words;
     Summer cnt(map);
     delete DataFrame::fromVisitor(mk_key(idx_), &kv, "SI", &cnt);
+    std::cout << "1" << endl << std::flush;
   }
  
   /** Merge the data frames of all nodes */
@@ -203,7 +204,9 @@ public:
     pln("Node 0: reducing counts...");
     SIMap map;
     Key* own = mk_key(0);
+    std::cout << "2" << endl << std::flush;
     merge(kv.get(*own), map);
+    std::cout << "2" << endl << std::flush;
     for (size_t i = 1; i < 3; ++i) { // merge other nodes
       Key* ok = mk_key(i);
       merge(kv.waitAndGet(*ok), map);
