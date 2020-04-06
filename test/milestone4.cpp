@@ -1,10 +1,12 @@
-#include <stdlib.h>
+#include "test_util.h"
+
 #include "../src/store/server.h"
 #include "../src/application/simple.h"
 #include "../src/application/wordcount.h"
 #include <thread>
 #include <functional>
 #include <mutex>
+#include <stdlib.h>
 
 #define NUM_THREADS 3
 
@@ -45,5 +47,6 @@ void wordcount_test() {
 int main() {
     //network_test();
     wordcount_test();
+    success("M3");
     return 0;
 }

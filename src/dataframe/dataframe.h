@@ -7,7 +7,9 @@
 #include "schema.h"
 #include "../serial/serial.h"
 #include "../serial/array.h"
+#include "../serial/message.h"
 #include "../object.h"
+#include "../util.h"
 #include <thread>
 #include <mutex>
 #include <functional>
@@ -34,7 +36,7 @@
 #define MAX_THREADS 8
 #define MIN_LINES 1000
 
-#define BUFF_SIZE 1024
+#define BUFF_SIZE 1048576
 #define TEMP_CLIENTS_MAX 30
 
 //Forward declaration for KVStore

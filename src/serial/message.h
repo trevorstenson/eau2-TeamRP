@@ -390,7 +390,6 @@ class Kill : public Message {
         }
 
         bool equals(Object* other) {
-            pln("IN KILL EQUALS");
             if (other == this) return true;
             Kill* x = dynamic_cast<Kill*>(other);
             if (x == nullptr) return false;

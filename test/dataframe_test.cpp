@@ -1,3 +1,5 @@
+#include "test_util.h"
+
 #include "../src/dataframe/sor.h"
 #include "../src/dataframe/rowers.h"
 
@@ -8,10 +10,9 @@ void df_sum_test() {
     DataFrame* df = sor->get_df();
     SumNumbers* sn = new SumNumbers();
     df->map(*sn);
-    cout << "Total sum: " << sn->get_sum() << endl;
+    assert(sn->get_sum() == 10150000.0);
     delete sn;
     delete sor;
-    cout << "---SumNumbers passed---" << endl;
 }
 
 void df_equals_test() {
@@ -28,7 +29,6 @@ void df_equals_test() {
     df2->set(1, 1, 100.2);
     df->set(1, 1, 100.1);
     assert(!df->equals(df2));
-    cout << "---DF Equality passed---" << endl;
 }
 
 /** Makes sure we can read in SOR, deserialize, and reserialzie */
@@ -53,14 +53,14 @@ void integration_test() {
     unsigned char* serial = df->serialize();
     DataFrame* df2 = new DataFrame(serial);
     assert(df->equals(df2));
-
-    cout << "---SOR - DataFrame - Serialization Integration passed---" << endl;
 }
 
 int main() {
     df_sum_test();
+    success("DataFrame sum");
     df_equals_test();
+    success("DataFrame equality");
     integration_test();
-    cout << "+++++++DataFrame tests passed+++++++\n\n";
+    success("DataFrame and Sor integration");
     return 0;
 }

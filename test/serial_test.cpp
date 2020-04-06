@@ -1,3 +1,5 @@
+#include "test_util.h"
+
 #include "../src/serial/array.h"
 #include "../src/serial/message.h"
 #include "../src/store/key.h"
@@ -27,8 +29,6 @@ void size_t_test() {
     unsigned char* d_serial = serialize_size_t(d);
     size_t d_deserial = deserialize_size_t(d_serial);
     assert(d == d_deserial);
-
-    cout << "*****   Passed: size_t utility   *****\n";
 }
 
 void double_test() {
@@ -51,8 +51,6 @@ void double_test() {
     unsigned char* d_serial = serialize_double(d);
     double d_deserial = deserialize_double(d_serial);
     assert(d == d_deserial);
-
-    cout << "*****   Passed: double utility   *****\n";
 }
 
 void string_test() {
@@ -70,8 +68,6 @@ void string_test() {
     unsigned char* c_serial = serialize_string(c);
     String* c_deserial = deserialize_string(c_serial);
     assert(c->equals(c_deserial));
-
-    cout << "*****   Passed: String* utility   *****\n";
 }
 
 void double_array_test() {
@@ -90,7 +86,6 @@ void double_array_test() {
     assert(!a->equals(a_deserial));
     a_deserial->push(542.4125);
     assert(a->equals(a_deserial));
-    cout << "*****   Passed: Double Array   *****\n";
 }
 
 void string_array_test() {
@@ -107,7 +102,6 @@ void string_array_test() {
     assert(!a->equals(a_deserial));
     a_deserial->deserialize(a_serial);
     assert(a->equals(a_deserial));
-    cout << "*****   Passed: String Array   *****\n";
 }
 
 void directory_test() {
@@ -134,7 +128,6 @@ void directory_test() {
     assert(d->equals(d_deserial));
     d_deserial->addresses->push(new String("bad"));
     assert(!d->equals(d_deserial));
-    cout << "*****   Passed: Directory   *****\n";
 }
 
 void ack_test() {
@@ -161,7 +154,6 @@ void ack_test() {
     assert(message->equals(message_deserialized));
     message->previous_kind = MsgKind::Reply;
     assert(!message->equals(message_deserialized));
-    cout << "*****   Passed: Ack   *****\n";
 }
 
 void nack_test() {
@@ -188,7 +180,6 @@ void nack_test() {
     assert(message->equals(message_deserialized));
     message->previous_kind = MsgKind::Reply;
     assert(!message->equals(message_deserialized));
-    cout << "*****   Passed: Nack   *****\n";
 }
 
 void status_test() {
@@ -214,8 +205,6 @@ void status_test() {
     message->id_ = 1111;
     assert(message->equals(message_deserialized));
     message->msg_ = new String("test1234");
-    assert(!message->equals(message_deserialized));
-    cout << "*****   Passed: Status   *****\n";
 }
 
 void register_test() {
@@ -247,7 +236,6 @@ void register_test() {
     assert(message->equals(message_deserialized));
     message->port = 123321;
     assert(!message->equals(message_deserialized));
-    cout << "*****   Passed: Register   *****\n";
 }
 
 void network_utility() {
@@ -269,7 +257,6 @@ void network_utility() {
     unsigned char* status2 = status->serialize();
     assert(MsgKind::Status == message_kind(status2));
     assert(39 == message_length(status2));
-    cout << "*****   Passed: Networking Utilities   *****\n";
 }
 
 void kill_test() {
@@ -279,7 +266,6 @@ void kill_test() {
     assert(33 == message_length(kill2));
     Kill* kill_d = new Kill(kill2);
     assert(kill->equals(kill_d));
-    cout << "*****   Passed: Kill   *****\n";
 }
 
 void schema_test() {
@@ -288,8 +274,6 @@ void schema_test() {
     unsigned char* serial = schema->serialize();
     Schema* schema2 = new Schema(serial);
     assert(schema->equals(schema2));
-
-    cout << "*****   Passed: Schema   *****\n";
 }
 
 void df_test() {
@@ -312,7 +296,6 @@ void df_test() {
     unsigned char* serial = df->serialize();
     DataFrame* df2 = new DataFrame(serial);
     assert(df2->equals(df));
-    cout << "*****   Passed: DataFrame   *****\n";
 }
 
 void key_test() {
@@ -325,7 +308,6 @@ void key_test() {
     Key* key4 = new Key(serial2);
     assert(key3->equals(key4));
     assert(!key->equals(key3));
-    cout << "*****   Passed: Key   *****\n";
 }
 
 void value_test() {
@@ -338,7 +320,6 @@ void value_test() {
     Value* value4 = new Value(serial2);
     assert(value3->equals(value4));
     assert(!value->equals(value3));
-    cout << "*****   Passed: Value   *****\n";
 }
 
 void put_test() {
@@ -348,7 +329,6 @@ void put_test() {
     unsigned char* serial = put1->serialize();
     Put* put2 = new Put(serial);
     assert(put1->equals(put2));
-    cout << "*****   Passed: Put   *****\n";
 }
 
 void get_test() {
@@ -365,7 +345,6 @@ void get_test() {
     assert(get3->equals(get4));
 
     assert(!get1->equals(get3));
-    cout << "*****   Passed: Get   *****\n";
 }
 
 void result_test() {
@@ -382,29 +361,45 @@ void result_test() {
     assert(res3->equals(res4));
 
     assert(!res1->equals(res3));
-    cout << "*****   Passed: Result   *****\n";
 }
 
 int main() {
-    cout << "Running serialization tests...\n";
     size_t_test();
+    success("Serial size_t");
     double_test();
+    success("Serial double");
     string_test();
+    success("Serial string");
     double_array_test();
+    success("Serial double array");
     string_array_test();
+    success("Serial string array");
     directory_test();
+    success("Serial directory");
     ack_test();
+    success("Serial ack");
     nack_test();
+    success("Serial nack");
     status_test();
+    success("Serial status");
     register_test();
+    success("Serial register");
     put_test();
+    success("Serial put");
     get_test();
+    success("Serial get");
     result_test();
+    success("Serial result");
     kill_test();
+    success("Serial kill");
     network_utility();
+    success("Serial network");
     schema_test();
+    success("Serial schema");
     df_test();
+    success("Serial DF");
     key_test();
+    success("Serial key");
     value_test();
-    cout << "*****   All serialization tests passed   *****\n";
+    success("Serial value");
 }

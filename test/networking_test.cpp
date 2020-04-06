@@ -1,10 +1,13 @@
+#include "test_util.h"
+
+#include <stdlib.h>
 #include <iostream>
 #include <cstdlib>
 #include <cstring>
 #include <stdio.h>
 #include <stdlib.h>
-#include "../src/server.h"
-#include "../src/node.h"
+#include "../src/store/networking/server.h"
+#include "../src/store/networking/node.h"
 #include <thread>
 #include <functional>
 #include <mutex>
@@ -26,5 +29,6 @@ void network_test() {
 
 int main() {
     network_test();
+    cout << "SUCCESS: Network" << endl;
     return 0;
 }
