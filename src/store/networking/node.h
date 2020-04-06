@@ -22,7 +22,7 @@
 #include <mutex>
 
 #define TEMP_CLIENTS_MAX 30
-#define BUFF_SIZE 1048576
+#define BUFF_SIZE 1024
 
 //class representing a Node within our network
 class Node : public Object {

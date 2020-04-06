@@ -36,7 +36,7 @@
 #define MAX_THREADS 8
 #define MIN_LINES 1000
 
-#define BUFF_SIZE 1048576
+#define BUFF_SIZE 1024
 #define TEMP_CLIENTS_MAX 30
 
 //Forward declaration for KVStore

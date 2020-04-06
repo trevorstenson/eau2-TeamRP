@@ -8,14 +8,14 @@ previous_milestones:
 	#g++ -g -pthread -w -std=c++11 test/milestone3.cpp -o m3
 	#NOTE: M3 can no longer run, as mock networking functionality has been removed.
 
-build_test:
+test:
+	#Compiling and generating test files. 
 	python3 gen.py
 	g++ -g -pthread -w -std=c++11 test/serial_test.cpp -o serial_test
 	g++ -g -pthread -w -std=c++11 test/util_test.cpp -o util_test
 	g++ -g -pthread -w -std=c++11 test/sor_test.cpp -o sor_test
 	g++ -g -pthread -w -std=c++11 test/dataframe_test.cpp -o dataframe_test
-
-run_test:
+	#Running tests
 	./serial_test
 	./util_test
 	./sor_test

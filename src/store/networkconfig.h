@@ -9,7 +9,7 @@
 #include <sys/ioctl.h>
 
 
-#define BUFF_SIZE 1048576
+#define BUFF_SIZE 1024
 #define TEMP_CLIENTS_MAX 30
 
 class NetworkConfig : public Object {

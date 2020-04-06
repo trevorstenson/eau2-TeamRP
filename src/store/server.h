@@ -19,7 +19,7 @@
 #include <thread>
 #include <functional>
 
-#define BUFF_SIZE 1048576
+#define BUFF_SIZE 1024
 
 //class representing a Server object
 class Server : public Object {
