@@ -20,7 +20,7 @@ class NetworkConfig : public Object {
         String* serverIp_;
         size_t serverPort_;
         // FDs for sending to neighbor sockets
-        int* neighborSockets;
+        atomic<int*> neighborSockets;
         Directory* nodeDir;
         int serverSocket_;
         int clientSocket_;

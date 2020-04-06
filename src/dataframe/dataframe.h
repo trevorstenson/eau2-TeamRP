@@ -69,6 +69,7 @@ public:
     void handleDisconnect(int fd);
     void handleNodeMsg(int fd, unsigned char* msg);
     void sendToNeighbor(int fd, unsigned char* msg);
+    void sendToNeighbor(int fd, unsigned char* msg, const char* debug);
     void handleStatus(int fd, unsigned char* msg);
     void handlePut(int fd, unsigned char* msg);
     void handleGet(int fd, unsigned char* msg);
@@ -672,6 +673,7 @@ public:
 /** KVStore implementation for the previous forward declaration */
 inline KVStore::KVStore() {
     waitAndGetValue = nullptr;
+    getRequests = new vector<Get*>();
 }
 inline KVStore::~KVStore() {
     delete waitAndGetValue;
@@ -716,10 +718,11 @@ inline DataFrame *KVStore::waitAndGet(Key &k) {
     } else {
         Get* g = new Get(idx_, k.node_, 1234, &k);
         while (nconfig_.neighborSockets[k.node_] == NULL) {
+            usleep(250000);
             pln("waiting for socket to not be null");
         }
         pln("not null anymore");
-        sendToNeighbor(nconfig_.neighborSockets[k.node_], g->serialize());
+        sendToNeighbor(nconfig_.neighborSockets[k.node_], g->serialize(), "in waitandget");
         nconfig_.waiting = true;
         //wait for result from neighbors
         while (nconfig_.waiting);
@@ -898,6 +901,11 @@ inline void KVStore::sendToNeighbor(int fd, unsigned char* msg) {
     }
 }
 
+inline void KVStore::sendToNeighbor(int fd, unsigned char* msg, const char* debug) {
+    printf("FROM SENDTONEIGHBOR: %S\n", debug);
+    sendToNeighbor(fd, msg);
+}
+
 //handler for status messages
 inline void KVStore::handleStatus(int fd, unsigned char* msg) {
     Status* incomingStatus = new Status(msg);
@@ -961,7 +969,7 @@ inline void KVStore::updateRequests() {
                 while (nconfig_.neighborSockets[(*i)->sender_] == NULL) {
                     pln("null socket, waiting");
                 }
-                sendToNeighbor(nconfig_.neighborSockets[(*i)->sender_], r->serialize());
+                sendToNeighbor(nconfig_.neighborSockets[(*i)->sender_], r->serialize(), "in update requests");
                 delete r;
                 getRequests->erase(getRequests->begin() + count);
             }

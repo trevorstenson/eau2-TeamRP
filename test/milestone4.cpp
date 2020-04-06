@@ -45,8 +45,8 @@ void wordcount_test() {
 }
 
 int main() {
-    //network_test();
-    wordcount_test();
+    network_test();
+    //wordcount_test();
     success("M4");
     return 0;
 }

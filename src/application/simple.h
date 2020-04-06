@@ -32,7 +32,7 @@ public:
   }
 
   void others() {
-    usleep(5000000);
+    //usleep(5000000);
     Key* k = new Key("goto 1", 1);
     DataFrame* d = kv.waitAndGet(*k);
     pln("printing df");
