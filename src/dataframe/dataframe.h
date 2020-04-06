@@ -960,20 +960,23 @@ inline void KVStore::handleGet(int fd, unsigned char* msg) {
 inline void KVStore::updateRequests() {
     while (nconfig_.running) {
         usleep(1000000);
-        int count = 0;
-        for (auto i = getRequests->begin(); i != getRequests->end(); ++i) {
-            pln("checking get requests!");
-            Value* v = kv_map_.get((*i)->key_);
+        Get* i;
+        for (int count = 0; count < getRequests->size(); ++count) {
+            i = getRequests->at(count);
+            pln("Checking get requests!");
+            cout << "Getting i key" << endl << std::flush;
+            Value* v = kv_map_.get(i->key_);
+            cout << "Got i key" << endl << std::flush;
             if (v != nullptr) {
+                cout << "V no longer nullptr" << std::flush;
                 Result* r = new Result(v);
-                while (nconfig_.neighborSockets[(*i)->sender_] == NULL) {
+                while (nconfig_.neighborSockets[i->sender_] == NULL) {
                     pln("null socket, waiting");
                 }
-                sendToNeighbor(nconfig_.neighborSockets[(*i)->sender_], r->serialize(), "in update requests");
+                sendToNeighbor(nconfig_.neighborSockets[i->sender_], r->serialize(), "in update requests");
                 delete r;
                 getRequests->erase(getRequests->begin() + count);
             }
-            count++;
         }
     }
 }

@@ -53,7 +53,7 @@ class NetworkConfig : public Object {
         ~NetworkConfig() {
             delete ip_;
             delete serverIp_;
-            delete[] neighborSockets;
+            //delete[] neighborSockets;
             delete nodeDir;
             delete[] serverBuffer;
             delete[] neighborBuffer;

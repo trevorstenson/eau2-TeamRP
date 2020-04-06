@@ -1,5 +1,6 @@
 milestone:
 	g++ -g -pthread -w -std=c++11 test/milestone4.cpp -o m4	
+	cp test/wordcount.txt .
 	./m4
 
 previous_milestones:
@@ -34,5 +35,6 @@ clean:
 	rm ./m2 || true
 	rm ./m3 || true
 	rm ./m4 || true
+	rm wordcount.txt || true
 	
 .PHONY: build test clean
