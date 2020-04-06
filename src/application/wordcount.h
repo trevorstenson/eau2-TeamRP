@@ -28,7 +28,7 @@ public:
         }
         buf_[i_] = 0;
         String word(buf_ + wStart, i_ - wStart);
-        r.set(0, word);
+        r.set(0, &word);
         ++i_;
         skipWhitespace_();
     }
@@ -41,7 +41,7 @@ public:
     /** Creates the reader and opens the file for reading.  */
     FileReader() {
         file_ = fopen("wordcount.txt", "r");
-        if (file_ == nullptr) assert("Cannot open file " << "wordcount.txt");
+        if (file_ == nullptr) assert("Cannot open file wordcount.txt");
         buf_ = new char[BUFSIZE + 1]; //  null terminator
         fillBuffer_();
         skipWhitespace_();
@@ -95,9 +95,9 @@ public:
   bool accept(Row& r) override {
     String* word = r.get_string(0);
     assert(word != nullptr);
-    Num* num = map_.contains(*word) ? map_.get(*word) : new Num();
+    Integer* num = map_.containsKey(word) ? map_.get(word) : new Integer();
     assert(num != nullptr);
-    num->v++;
+    num->val_++;
     map_.set(*word, num);
     return false;
   }
@@ -128,21 +128,21 @@ public:
  
   String* k() {
       if (i==map_.capacity_ || j == map_.size()) return nullptr;
-      return (String*)(map_.values_[i].getKey());
+      return (String*)(map_.values_[i]->getKey());
   }
  
   size_t v() {
       if (i == map_.capacity_ || j == map_.size()) {
           assert(false); return 0;
       }
-      return ((size_t)(dynamic_cast<Integer*>(map_.values_[i].getValue()))->get());
+      return ((size_t)(dynamic_cast<Integer*>(map_.values_[i]->getValue()))->get());
   }
  
   void visit(Row& r) {
       if (!k()) next();
       String & key = *k();
       size_t value = v();
-      r.set(0, key);
+      r.set(0, &key);
       r.set(1, (int) value);
       next();
   }
@@ -168,9 +168,9 @@ public:
  
   /** The master nodes reads the input, then all of the nodes count. */
   void run_() override {
-    if (index == 0) {
+    if (idx_ == 0) {
       FileReader fr;
-      delete DataFrame::fromVisitor(&in, &kv, "S", fr);
+      delete DataFrame::fromVisitor(&in, &kv, "S", &fr);
     }
     local_count();
     reduce();
@@ -179,7 +179,7 @@ public:
   /** Returns a key for given node.  These keys are homed on master node
    *  which then joins them one by one. */
   Key* mk_key(size_t idx) {
-      Key * k = kbuf.c(idx).get();
+      Key * k = kbuf.c(idx)->get();
       printf("Created key %s", k->c_str());
       return k;
   }
@@ -187,18 +187,19 @@ public:
   /** Compute word counts on the local node and build a data frame. */
   void local_count() {
     DataFrame* words = (kv.waitAndGet(in));
-    p("Node ").p(index).pln(": starting local count...");
+    p("Node ").p(idx_).pln(": starting local count...");
     SIMap map;
     Adder add(map);
-    words->local_map(add);
+    //words->local_map(add);
+    words->map(add);
     delete words;
     Summer cnt(map);
-    delete DataFrame::fromVisitor(mk_key(index), &kv, "SI", cnt);
+    delete DataFrame::fromVisitor(mk_key(idx_), &kv, "SI", &cnt);
   }
  
   /** Merge the data frames of all nodes */
   void reduce() {
-    if (index != 0) return;
+    if (idx_ != 0) return;
     pln("Node 0: reducing counts...");
     SIMap map;
     Key* own = mk_key(0);

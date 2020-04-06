@@ -425,16 +425,12 @@ class Integer : public Object {
             val_ = i;
         }
 
+        Integer() {
+            val_ = 0;
+        }
+
         int get() {
             return val_;
-        }
-};
-
-class SIMap : public Object {
-    public:
-
-        bool contains(String& s) {
-            
         }
 };
 
@@ -464,13 +460,13 @@ class SIMap : public Map {
          * @param key - the key to return the value for.
          * @return String* - the value that corresponds to key
          */
-        virtual int get(Object* key) {
+        virtual Integer* get(Object* key) {
             if (!containsKey(key)) return nullptr;
-            return dynamic_cast<Integer*>(Map::get(key))->get();
+            return dynamic_cast<Integer*>(Map::get(key));
         }
 
-        virtual void set(String& s, ) {
-            
+        virtual void set(String& s, Integer* i) {
+            Map::put(&s, i);
         }
 
         /**
@@ -480,8 +476,8 @@ class SIMap : public Map {
          * @param value - the value to insert
          * @return String* - the previous value for the given key
          */
-        virtual int put(Object* key, int value) {
-            return dynamic_cast<Integer*>(Map::put(key, new Integer(value)))->get();
+        virtual Integer* put(Object* key, int value) {
+            return dynamic_cast<Integer*>(Map::put(key, new Integer(value)));
         }
 
         /**
@@ -490,7 +486,7 @@ class SIMap : public Map {
          * @param key - the key to remove
          * @return String* - the value of the key that was removed if exists, else nullptr
          */
-        virtual int remove(Object* key) {
-            return dynamic_cast<Integer*>(Map::remove(key))->get();
+        virtual Integer* remove(Object* key) {
+            return dynamic_cast<Integer*>(Map::remove(key));
         }
 };
