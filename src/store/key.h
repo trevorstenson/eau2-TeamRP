@@ -61,29 +61,23 @@ class Key : public Object, public Serializable {
         }
 };
 
-class KeyBuff : public Object {
-    public:
-        StrBuff s_;
-        Key* k_;
-
-        KeyBuff(Key* k) {
-            k_ = k;
-        }
-
-        void c(const char* str) {
-
-        }
-
-        KeyBuff* c(size_t s) {
-            StrBuff* sb = new StrBuff();
-            sb->c(k_->name_->c_str());
-            sb->c(s);
-            k_->name_ = sb->get();
-            delete sb;
-            return this;
-        }
-
-        Key* get() {
-
-        }
-};
+class KeyBuff : public Object {                                                  
+  public:                                                                        
+  Key* orig_; // external                                                        
+  StrBuff buf_;                                                                  
+                                                                                 
+  KeyBuff(Key* orig) : orig_(orig), buf_(orig->c_str()) {}                               
+                                                                                 
+  KeyBuff& c(String &s) { buf_.c(s); return *this;  }                            
+  KeyBuff& c(size_t v) { buf_.c(v); return *this; }                              
+  KeyBuff& c(const char* v) { buf_.c(v); return *this; }                         
+                                                                                 
+  Key* get() {                                                                   
+    String* s = buf_.get();                                                      
+    buf_.c(orig_->c_str());                                                      
+    Key* k = new Key(s->steal(), orig_->node_);                                 
+    delete s;                                                                    
+    return k;                                                                    
+  }                                                                              
+}; // KeyBuff                                                                    
+        

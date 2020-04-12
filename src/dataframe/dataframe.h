@@ -515,6 +515,7 @@ public:
         newDf->add_row(*r);
         unsigned char* serial = newDf->serialize();
         kv->put(*key, serial, extract_size_t(serial, 0));
+        std::cout << "4" << flush;
         return newDf;
     }
 
@@ -685,13 +686,17 @@ inline bool KVStore::containsKey(Key *k) {
 }
 inline Value *KVStore::put(Key &k, Value *v) {
     // data is stored in local kvstore
+    std::cout << "Put start " << endl << flush;
     if (idx_ == k.node_) {
+        std::cout << "Local put end " << endl << flush;
         return kv_map_.put(&k, v);
     } else {
-        // Send the data to the correct node TODO change to real network call
-        //return mock_network_[k.node_]->put(k, v);
+        // Send the data to the correct node 
+        std::cout << "1" << endl << flush;
         Put* p = new Put(idx_, k.node_, 1234, &k, v);
+        std::cout << k.node_ << endl << flush;
         sendToNeighbor(nconfig_.neighborSockets[k.node_], p->serialize());
+        std::cout << "Remote put end " << endl << flush;
         return nullptr;
     }
 }
@@ -896,6 +901,8 @@ inline void KVStore::handleNodeMsg(int fd, unsigned char* msg) {
 }
 
 inline void KVStore::sendToNeighbor(int fd, unsigned char* msg) {
+    
+        std::cout << "2a" << endl << flush;
     if (send(fd, msg, message_length(msg), 0) < 0) {
         assert("Error sending data to neighbor node." && false);
     }

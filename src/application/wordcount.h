@@ -179,7 +179,8 @@ public:
   /** Returns a key for given node.  These keys are homed on master node
    *  which then joins them one by one. */
   Key* mk_key(size_t idx) {
-      Key * k = kbuf.c(idx)->get();
+      Key * k = kbuf.c(idx).get();
+        std::cout << "|||||||||" << k->node_ << endl << flush;
       //printf("Created key %s", k->c_str());
       return k;
   }
