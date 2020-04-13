@@ -196,10 +196,10 @@ public:
 class Linus : public Application {
 public:
   int DEGREES = 4;  // How many degrees of separation form linus?
-  int LINUS = 68;   // The uid of Linus (offset in the user df) //WAS 4967 - changed to heroku
+  int LINUS = 1;   // The uid of Linus (offset in the user df) //WAS 4967 - changed to heroku
   const char* PROJ = "datasets/projects.ltgt";
   const char* USER = "datasets/users.ltgt";
-  const char* COMM = "datasets/commits.ltgt";
+  const char* COMM = "datasets/commits.test";
   DataFrame* projects; //  pid x project name
   DataFrame* users;  // uid x user name
   DataFrame* commits;  // pid x uid x uid 
