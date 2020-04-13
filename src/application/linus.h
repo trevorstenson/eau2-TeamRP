@@ -189,7 +189,6 @@ public:
   /** Compute DEGREES of Linus.  */
   void run_() override {
     readInput();
-    kv.kv_map_.print();
     for (size_t i = 0; i < DEGREES; i++) step(i);
   }
 
@@ -232,10 +231,8 @@ public:
        users = dynamic_cast<DataFrame*>(kv.waitAndGet(uK));
        commits = dynamic_cast<DataFrame*>(kv.waitAndGet(cK));
     }
-    kv.kv_map_.print();
     uSet = new Set(users);
     pSet = new Set(projects);
-    kv.kv_map_.print();
  }
 
  /** Performs a step of the linus calculation. It operates over the three
@@ -273,14 +270,14 @@ public:
   void merge(Set& set, char const* name, int stage) {
     if (this_node() == 0) {
       //for (size_t i = 1; i < arg.num_nodes; ++i) {
-        for (size_t i = 1; i < 1; ++i) {
-	Key nK(StrBuff(name).c(stage).c("-").c(i).get());
-	DataFrame* delta = dynamic_cast<DataFrame*>(kv.waitAndGet(nK));
-	p("    received delta of ").p(delta->nrows())
-	  .p(" elements from node ").pln(i);
-	SetUpdater upd(set);
-	delta->map(upd);
-	delete delta;
+      for (size_t i = 1; i < 1; ++i) {
+        Key nK(StrBuff(name).c(stage).c("-").c(i).get());
+        DataFrame* delta = dynamic_cast<DataFrame*>(kv.waitAndGet(nK));
+        p("    received delta of ").p(delta->nrows())
+          .p(" elements from node ").pln(i);
+        SetUpdater upd(set);
+        delta->map(upd);
+        delete delta;
       }
       p("    storing ").p(set.size()).pln(" merged elements");
       SetWriter writer(set);

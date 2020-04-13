@@ -317,13 +317,9 @@ class KVMap : public Map {
         }
 
         Value* get(Key* key) {
-            cout << len_ << endl << flush;
             for (size_t i = 0; i < len_; i++) {
-                cout << "Idx " << i << endl << flush;
                 Object* o = values_[i]->getKey();
                 Key* k = dynamic_cast<Key*>(o);
-
-                cout << "Idx " << i << endl << flush;
                 if (k != nullptr && k->equals(key)) {
                     return dynamic_cast<Value*>(values_[i]->getValue());
                 }
@@ -346,14 +342,6 @@ class KVMap : public Map {
                 ensureCapacity();
                 Pair* pair = new Pair(key, value);
                 values_[len_] = pair;
-
-                Object* o;Key* k;
-                for (int i = 0; i <= len_; i ++) {
-                    o = values_[i]->getKey();
-                    k = dynamic_cast<Key*>(o);
-                    cout << k->name_->c_str() << endl << flush;
-                }
-
                 len_++;
                 return nullptr;
             }

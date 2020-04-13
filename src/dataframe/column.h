@@ -25,7 +25,6 @@ using namespace std;
  * */
 class Column : public Object {
  public:
-  char type;
   size_t len_;
 
   Column() { }
@@ -72,9 +71,8 @@ class Column : public Object {
   virtual size_t size() {}
  
   /** Return the type of this column as a char: 'S', 'B', 'I' and 'D'.*/
-  char get_type() {
-    assert(type != NULL);
-    return type;
+  virtual char get_type() {
+    assert("Should not be called on super type Column");
   }
 
   bool equals(Object * other) { 
@@ -97,7 +95,6 @@ class IntColumn : public Column {
     int** vals_;
 
   IntColumn() {
-    type = 'I';
     len_ = 0;
     vals_ = new int*[20];
     for (int i = 0; i < 20; i++) {
@@ -106,7 +103,6 @@ class IntColumn : public Column {
   }
 
   IntColumn(int n, ...) {
-    type = 'I';
     va_list arguments;
     len_ = n;
     vals_ = new int*[20];
@@ -123,6 +119,10 @@ class IntColumn : public Column {
       vals_[parentIndex][subIndex] = val;
     }
     va_end(arguments);
+  }
+
+  char get_type() {
+    return 'I';
   }
 
   /**Ensures the smaller subarray is large enough/instantiated. */
@@ -224,7 +224,6 @@ class BoolColumn : public Column {
     bool** vals_;
 
   BoolColumn() {
-    type = 'B';
     len_ = 0;
     vals_ = new bool*[20];
     for (int i = 0; i < 20; i++) {
@@ -233,7 +232,6 @@ class BoolColumn : public Column {
   }
 
   BoolColumn(int n, ...) {
-    type = 'B';
     va_list arguments;
     len_ = n;
     vals_ = new bool*[20];
@@ -250,6 +248,10 @@ class BoolColumn : public Column {
       vals_[parentIndex][subIndex] = val;
     }
     va_end(arguments);
+  }
+
+  char get_type() {
+    return 'B';
   }
 
   /**Ensures the smaller subarray is large enough/instantiated. */
@@ -354,7 +356,6 @@ class DoubleColumn : public Column {
     double** vals_;
 
   DoubleColumn() {
-    type = 'D';
     len_ = 0;
     vals_ = new double*[20];
     for (int i = 0; i < 20; i++) {
@@ -363,7 +364,6 @@ class DoubleColumn : public Column {
   }
 
   DoubleColumn(int n, ...) {
-    type = 'D';
     va_list arguments;
     len_ = n;
     vals_ = new double*[20];
@@ -380,6 +380,10 @@ class DoubleColumn : public Column {
       vals_[parentIndex][subIndex] = val;
     }
     va_end(arguments);
+  }
+
+  char get_type() {
+    return 'D';
   }
 
   /**Ensures the smaller subarray is large enough/instantiated. */
@@ -481,7 +485,6 @@ class StringColumn : public Column {
     String*** vals_;
 
   StringColumn() {
-    type = 'S';
     len_ = 0;
     vals_ = new String**[20];
     for (int i = 0; i < 20; i++) {
@@ -490,7 +493,6 @@ class StringColumn : public Column {
   }
 
   StringColumn(int n, ...) {
-    type = 'S';
     va_list arguments;
     len_ = n;
     vals_ = new String**[20];
@@ -507,6 +509,10 @@ class StringColumn : public Column {
       vals_[parentIndex][subIndex] = val;
     }
     va_end(arguments);
+  }
+
+  char get_type() {
+    return 'S';
   }
 
   /**Ensures the smaller subarray is large enough/instantiated. */

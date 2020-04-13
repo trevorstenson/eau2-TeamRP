@@ -180,7 +180,7 @@ public:
         }
         //Copy column
         Column *addCol;
-        switch (col->type) {
+        switch (col->get_type()) {
         case 'B':
             addCol = col->as_bool()->clone();
             break;
@@ -496,10 +496,10 @@ public:
         return newDf;
     }
 
-    //static DataFrame *fromFile(const char* file, Key *key, KVStore kv)
+    //static DataFrame *fromFile(const char* file, Key *key, KVStore kv) Not implemented to avoid cirular references
 
-    static DataFrame *fromScalar(Key *key, KVStore *kv, double value) {
-        String *schemaStr = new String("D");
+    static DataFrame *fromScalar(Key *key, KVStore *kv, int value) {
+        String *schemaStr = new String("I");
         Schema *newSchema = new Schema(schemaStr->c_str());
         delete schemaStr;
         DataFrame *newDf = new DataFrame(*newSchema);
