@@ -112,7 +112,7 @@ public:
 //  * of Linus, then the project is added to the set. If the project was
 //  * already tagged then it is not added to the set of newProjects.
 //  *************************************************************************/
-class ProjectsTagger : public Reader {
+class ProjectsTagger : public Rower {
 public:
   Set& uSet; // set of collaborator 
   Set& pSet; // set of projects of collaborators
@@ -124,7 +124,7 @@ public:
   /** The data frame must have at least two integer columns. The newProject
    * set keeps track of projects that were newly tagged (they will have to
    * be communicated to other nodes). */
-  bool visit(Row & row) override {
+  bool accept(Row & row) override {
     int pid = row.get_int(0);
     int uid = row.get_int(1);
     if (uSet.test(uid)) 
@@ -153,7 +153,7 @@ public:
   UsersTagger(Set& pSet,Set& uSet, DataFrame* users):
     pSet(pSet), uSet(uSet), newUsers(users->nrows()) { }
 
-  bool visit(Row & row) override {
+  bool accept(Row & row) override {
     int pid = row.get_int(0);
     int uid = row.get_int(1);
     if (pSet.test(pid)) 
@@ -248,11 +248,11 @@ public:
     newUsers->map(upd); // all of the new users are copied to delta.
     delete newUsers;
     ProjectsTagger ptagger(delta, *pSet, projects);
-    commits->local_map(ptagger); // marking all projects touched by delta
+    commits->map(ptagger); //local_map(ptagger); // marking all projects touched by delta
     merge(ptagger.newProjects, "projects-", stage);
     pSet->union_(ptagger.newProjects); // 
     UsersTagger utagger(ptagger.newProjects, *uSet, users);
-    commits->local_map(utagger);
+    commits->map(utagger);
     merge(utagger.newUsers, "users-", stage + 1);
     uSet->union_(utagger.newUsers);
     p("    after stage ").p(stage).pln(":");
@@ -268,7 +268,8 @@ public:
    */ 
   void merge(Set& set, char const* name, int stage) {
     if (this_node() == 0) {
-      for (size_t i = 1; i < arg.num_nodes; ++i) {
+      //for (size_t i = 1; i < arg.num_nodes; ++i) {
+        for (size_t i = 1; i < 1; ++i) {
 	Key nK(StrBuff(name).c(stage).c("-").c(i).get());
 	DataFrame* delta = dynamic_cast<DataFrame*>(kv.waitAndGet(nK));
 	p("    received delta of ").p(delta->nrows())
@@ -280,12 +281,12 @@ public:
       p("    storing ").p(set.size()).pln(" merged elements");
       SetWriter writer(set);
       Key k(StrBuff(name).c(stage).c("-0").get());
-      delete DataFrame::fromVisitor(&k, &kv, "I", writer);
+      delete DataFrame::fromVisitor(&k, &kv, "I", &writer);
     } else {
       p("    sending ").p(set.size()).pln(" elements to master node");
       SetWriter writer(set);
-      Key k(StrBuff(name).c(stage).c("-").c(index).get());
-      delete DataFrame::fromVisitor(&k, &kv, "I", writer);
+      Key k(StrBuff(name).c(stage).c("-").c(idx_).get());
+      delete DataFrame::fromVisitor(&k, &kv, "I", &writer);
       Key mK(StrBuff(name).c(stage).c("-0").get());
       DataFrame* merged = dynamic_cast<DataFrame*>(kv.waitAndGet(mK));
       p("    receiving ").p(merged->nrows()).pln(" merged elements");

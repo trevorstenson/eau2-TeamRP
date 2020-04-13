@@ -98,7 +98,9 @@ public:
     }
 
     //Adding this causes early segfault
-    StrBuff(char* c): StrBuff() {
+    StrBuff(const char* c) {
+        val_ = new char[capacity_ = 10];
+        size_ = 0;
         this->c(c);
     }
 

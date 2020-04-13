@@ -23,6 +23,11 @@ class Key : public Object, public Serializable {
             node_ = 0;
         }
 
+        Key(String* str) {
+            name_ = str->clone();
+            node_ = 0;
+        }
+
         Key(unsigned char* serial) {
             deserialize(serial);
         }
