@@ -38,6 +38,19 @@ public:
 
   ~Set() { delete[] vals_; }
 
+  DataFrame* to_df() {
+    Schema* schema = new Schema("I");
+    DataFrame* df = new DataFrame(*schema);
+    size_t count = 0;
+    for (int i = 0; i < size_; i++) {
+      if (vals_[i]) {
+        df->set(0, count, i);
+        count++;
+      }
+    }
+    return df; 
+  }
+
   /** Add idx to the set. If idx is out of bound, ignore it.  Out of bound
    *  values can occur if there are references to pids or uids in commits
    *  that did not appear in projects or users.
@@ -182,7 +195,7 @@ public:
  **************************************************************************/
 class Linus : public Application {
 public:
-  int DEGREES = 1;  // How many degrees of separation form linus?
+  int DEGREES = 4;  // How many degrees of separation form linus?
   int LINUS = 68;   // The uid of Linus (offset in the user df) //WAS 4967 - changed to heroku
   const char* PROJ = "datasets/projects.ltgt";
   const char* USER = "datasets/users.ltgt";
@@ -254,19 +267,12 @@ public:
     Key uK(StrBuff("users-").c(stage).c("-0").get());
     // A df with all the users added on the previous round
     DataFrame* newUsers = dynamic_cast<DataFrame*>(kv.waitAndGet(uK));    
-    cout << newUsers->nrows() << endl;
     Set delta(users);
-    cout << "TS1: " << delta.taggedSize() << endl;
     SetUpdater upd(delta);  
     newUsers->map(upd); // all of the new users are copied to delta.
-    cout << "TS2: " << delta.taggedSize() << endl;
     delete newUsers;
-    cout << "TS3: " << pSet->taggedSize() << endl;
     ProjectsTagger ptagger(delta, *pSet, projects);
     commits->map(ptagger); //local_map(ptagger); // marking all projects touched by delta
-    cout << "TS4: " << pSet->taggedSize() << endl;
-
-
     merge(ptagger.newProjects, "projects-", stage);
     pSet->union_(ptagger.newProjects); // 
     UsersTagger utagger(ptagger.newProjects, *uSet, users);
@@ -297,9 +303,12 @@ public:
         delete delta;
       }
       p("    storing ").p(set.size()).pln(" merged elements");
-      SetWriter writer(set);
+      //SetWriter writer(set);
       Key k(StrBuff(name).c(stage).c("-0").get());
-      delete DataFrame::fromVisitor(&k, &kv, "I", &writer);
+      DataFrame* df = set.to_df();
+      unsigned char* serial = df->serialize();
+      kv.put(*dynamic_cast<Key*>(k.clone()), new Value(serial, strlen((char*)serial)));
+      //delete DataFrame::fromVisitor(&k, &kv, "I", &writer);
     } else {
       p("    sending ").p(set.size()).pln(" elements to master node");
       SetWriter writer(set);

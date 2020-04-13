@@ -516,7 +516,7 @@ public:
         DataFrame* newDf = new DataFrame(*newSchema);
         newDf->add_row(*r);
         unsigned char* serial = newDf->serialize();
-        kv->put(*key, serial, extract_size_t(serial, 0));
+        kv->put(*dynamic_cast<Key*>(key->clone()), serial, extract_size_t(serial, 0));
         return newDf;
     }
 
