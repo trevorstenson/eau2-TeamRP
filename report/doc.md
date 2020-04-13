@@ -59,3 +59,4 @@ Currently, our application successfully runs on a single node without any networ
 We decided to first implement it this way because we were not fully confident in our networking layer's reliability due to both connectivity issues during network setup, as well as a lack of failure mechanisms when data happened to be lost. 
 Because the Linus application requires so much data to fully process the result, we did not trust our initial networking layer to handle that load. 
 Additionally, it was much easier to debug the Linus functionality without worrying about any potential networking issues popping up.
+Prior to our final code review, our mission is to integrate networking functionality into our Linus application so that we are able to fully process the data we were provided.
