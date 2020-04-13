@@ -208,17 +208,17 @@ public:
 
       SorAdapter* sor_projects = new SorAdapter(0, UINT32_MAX, strdup(PROJ));
       projects = sor_projects->df_; //DataFrame::fromFile(PROJ, pK.clone(), &kv);
-      kv.put(pK, new Value(projects->serialize()));
+      //kv.put(pK, new Value(projects->serialize()));
       p("    ").p(projects->nrows()).pln(" projects");
 
       SorAdapter* sor_users = new SorAdapter(0, UINT32_MAX, strdup(USER));
       users = sor_users->df_; //DataFrame::fromFile(USER, uK.clone(), &kv);
-      kv.put(uK, new Value(users->serialize()));
+      //kv.put(uK, new Value(users->serialize()));
       p("    ").p(users->nrows()).pln(" users");
 
       SorAdapter* sor_commits = new SorAdapter(0, UINT32_MAX, strdup(COMM));
       commits = sor_commits->df_; //DataFrame::fromFile(COMM, cK.clone(), &kv);
-      kv.put(cK, new Value(commits->serialize()));
+      //kv.put(cK, new Value(commits->serialize()));
       p("    ").p(commits->nrows()).pln(" commits");
 
        // This dataframe contains the id of Linus.

@@ -45,6 +45,13 @@ class Parser {
          */
         Parser(unsigned int length, DataFrame* df_) : Parser(length) {
             infer_only = (df_ == nullptr);
+            if (!infer_only) {
+                vector<char> temp;
+                for (int i = 0; i < df_->schema->n_col; i++) {
+                    temp.push_back(df_->schema->types[i]);
+                }
+                type_vector = temp;
+            }
             df = df_;
         }
 
@@ -236,7 +243,6 @@ class SorAdapter {
             build_DataFrame(file, from, length);
         }
 
-        //It will need to be implemented in future assignments. 
         Schema* infer_schema(string filename, unsigned int from, unsigned int length) {
             //create the filestream and skip to the proper location in the file
             fstream fin(filename, fstream::in);
