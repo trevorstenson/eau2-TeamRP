@@ -6,7 +6,6 @@
 #include <vector>
 #include "../type.h"
 #include "dataframe.h"
-#include "util.h"
 
 using namespace std;
 

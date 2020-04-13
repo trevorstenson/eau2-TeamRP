@@ -7,6 +7,7 @@
 #include <netinet/in.h>  
 #include <sys/time.h>
 #include <sys/ioctl.h>
+#include <atomic>
 
 
 #define BUFF_SIZE 1024

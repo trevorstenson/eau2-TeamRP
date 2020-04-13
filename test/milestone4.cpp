@@ -31,12 +31,11 @@ void wordcount_test() {
     std::thread** threads = new std::thread*[3];
     Server* s = new Server("127.0.0.1", 8080, 3);
     s->serve();
-    usleep(1000000);
     for (int i = 0; i < NUM_THREADS; i++) {
+        usleep(1000000);
         WordCount* w = new WordCount(i);
         w->kv.configure("127.0.0.1", 33085 + i, "127.0.0.1", 8080);
         threads[i] = new std::thread(&WordCount::run_, w);
-        usleep(1000000);
     }
     usleep(1000000);
     s->shutdown();
