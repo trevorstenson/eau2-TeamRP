@@ -496,6 +496,8 @@ public:
         return newDf;
     }
 
+    //static DataFrame *fromFile(const char* file, Key *key, KVStore kv)
+
     static DataFrame *fromScalar(Key *key, KVStore *kv, double value) {
         String *schemaStr = new String("D");
         Schema *newSchema = new Schema(schemaStr->c_str());

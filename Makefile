@@ -1,9 +1,6 @@
 milestone:
-	#g++ -g -pthread -w -std=c++11 test/milestone5.cpp -o m5
-	#./m5
-	g++ -g -pthread -w -std=c++11 test/milestone4.cpp -o m4	
-	cp test/wordcount.txt .
-	./m4
+	g++ -g -pthread -w -std=c++11 test/milestone5.cpp -o m5
+	./m5
 
 previous_milestones:
 	g++ -g -pthread -w -std=c++11 test/milestone2.cpp -o m2
