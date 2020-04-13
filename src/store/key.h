@@ -61,6 +61,7 @@ class Key : public Object, public Serializable {
         }
 };
 
+//Provided by Professor Vitek on Piazza
 class KeyBuff : public Object {                                                  
   public:                                                                        
   Key* orig_; // external                                                        

@@ -168,11 +168,14 @@ public:
  
   /** The master nodes reads the input, then all of the nodes count. */
   void run_() override {
+    std::cout << "+run() -fromVisitor" << std::endl << flush;
     if (idx_ == 0) {
       FileReader fr;
       delete DataFrame::fromVisitor(&in, &kv, "S", &fr);
     }
+    std::cout << "+run() -local-count()" << std::endl << flush;
     local_count();
+    std::cout << "+run() -reduce()" << std::endl << flush;
     reduce();
   }
  
@@ -180,7 +183,6 @@ public:
    *  which then joins them one by one. */
   Key* mk_key(size_t idx) {
       Key * k = kbuf.c(idx).get();
-        std::cout << "|||||||||" << k->node_ << endl << flush;
       //printf("Created key %s", k->c_str());
       return k;
   }
@@ -196,7 +198,7 @@ public:
     delete words;
     Summer cnt(map);
     delete DataFrame::fromVisitor(mk_key(idx_), &kv, "SI", &cnt);
-    std::cout << "1" << endl << std::flush;
+
   }
  
   /** Merge the data frames of all nodes */

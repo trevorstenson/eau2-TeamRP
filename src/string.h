@@ -97,9 +97,8 @@ public:
         size_ = 0;
     }
 
-    StrBuff(char* c) {
-        val_ = new char[capacity_ = 10];
-        size_ = 0;
+    //Adding this causes early segfault
+    StrBuff(char* c): StrBuff() {
         this->c(c);
     }
 
