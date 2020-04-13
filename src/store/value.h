@@ -25,10 +25,16 @@ class Value : public Object {
             delete blob_;
         }
 
+        /**
+         * Serializes this value. Structure is as follows:
+         * |--8 bytes--------------|-8 bytes------|-X bytes-|
+         * |-Total length in bytes-|-blob_length_-|-blob_---|
+         */
         unsigned char *serialize() {
             //TODO this cast may need to be changed
             size_t length = 16 + blob_length_;
             unsigned char* buffer = new unsigned char[length];
+            std::cout << length << " " << blob_length_ << endl << flush;
             insert_size_t(length, buffer, 0);
             insert_size_t(blob_length_, buffer, 8);
             copy_unsigned(buffer + 16, blob_, blob_length_);
@@ -40,6 +46,7 @@ class Value : public Object {
             blob_length_ = extract_size_t(serialized, 8);
             blob_ = new unsigned char[blob_length_];
             copy_unsigned(blob_, serialized + 16, blob_length_);
+            std::cout << length << " " << blob_length_ << endl << flush;
             assert(length == 16 + blob_length_);
             return length;
         }

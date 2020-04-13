@@ -1,5 +1,6 @@
 //lang:CwC
 #pragma once
+
 #include <atomic>
 #include <stdio.h>  
 #include <stdlib.h>  
@@ -14,8 +15,8 @@
 #include "assert.h"
 #include "../../object.h"
 #include "../../string.h"
-#include "../../serial/src/message.h"
-#include "../../serial/src/serial.h"
+#include "../../serial/message.h"
+#include "../../serial/serial.h"
 #include <thread>
 #include <functional>
 #include <mutex>

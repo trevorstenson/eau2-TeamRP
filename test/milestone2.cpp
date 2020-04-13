@@ -1,3 +1,5 @@
+#include "test_util.h"
+
 #include "../src/application/trivial.h"
 #include "assert.h"
 
@@ -28,5 +30,6 @@ void map_test() {
 int main() {
     //map_test();
     trivial_test();
+    success("M2");
     return 0;
 }

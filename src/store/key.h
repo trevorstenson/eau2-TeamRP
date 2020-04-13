@@ -18,12 +18,26 @@ class Key : public Object, public Serializable {
             node_ = node;
         }
 
+        Key(const char* name) {
+            name_ = new String(name);
+            node_ = 0;
+        }
+
+        Key(String* str) {
+            name_ = str->clone();
+            node_ = 0;
+        }
+
         Key(unsigned char* serial) {
             deserialize(serial);
         }
 
         ~Key() {
             delete name_;
+        }
+
+        Object* clone() {
+            return new Key(name_->clone()->c_str(), node_);
         }
 
         bool equals(Object  * other) {
@@ -55,3 +69,25 @@ class Key : public Object, public Serializable {
             return length;
         }
 };
+
+//Provided by Professor Vitek on Piazza
+class KeyBuff : public Object {                                                  
+  public:                                                                        
+  Key* orig_; // external                                                        
+  StrBuff buf_;                                                                  
+                                                                                 
+  KeyBuff(Key* orig) : orig_(orig), buf_(orig->c_str()) {}                               
+                                                                                 
+  KeyBuff& c(String &s) { buf_.c(s); return *this;  }                            
+  KeyBuff& c(size_t v) { buf_.c(v); return *this; }                              
+  KeyBuff& c(const char* v) { buf_.c(v); return *this; }                         
+                                                                                 
+  Key* get() {                                                                   
+    String* s = buf_.get();                                                      
+    buf_.c(orig_->c_str());                                                      
+    Key* k = new Key(s->steal(), orig_->node_);                                 
+    delete s;                                                                    
+    return k;                                                                    
+  }                                                                              
+}; // KeyBuff                                                                    
+        

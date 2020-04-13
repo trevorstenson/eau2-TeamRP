@@ -296,7 +296,7 @@ class KVMap : public Map {
     public:
         KVMap() : Map() { }
 
-        virtual bool containsKey(Key* key) {
+        bool containsKey(Key* key) {
             for (size_t i = 0; i < len_; i++) {
                 Key* k = dynamic_cast<Key*>(values_[i]->getKey());
                 if (k != nullptr && k->equals(key)) {
@@ -306,7 +306,7 @@ class KVMap : public Map {
             return false;
         }
 
-        virtual bool containsValue(Value* value) {
+        bool containsValue(Value* value) {
             for (size_t i = 0; i < len_; i++) {
                 Value* v = dynamic_cast<Value*>(values_[i]->getValue());
                 if (v != nullptr && v->equals(value)) {
@@ -316,9 +316,10 @@ class KVMap : public Map {
             return false;
         }
 
-        virtual Value* get(Key* key) {
+        Value* get(Key* key) {
             for (size_t i = 0; i < len_; i++) {
-                Key* k = dynamic_cast<Key*>(values_[i]->getKey());
+                Object* o = values_[i]->getKey();
+                Key* k = dynamic_cast<Key*>(o);
                 if (k != nullptr && k->equals(key)) {
                     return dynamic_cast<Value*>(values_[i]->getValue());
                 }
@@ -326,7 +327,7 @@ class KVMap : public Map {
             return nullptr;
         }
 
-        virtual Value* put(Key* key, Value* value) {
+        Value* put(Key* key, Value* value) {
             if (key == nullptr) {
                 assert(("Given key cannot be null.", false));
             }
@@ -346,8 +347,18 @@ class KVMap : public Map {
             }
         }
 
-        virtual Value* remove(Key* key) {
+        Value* remove(Key* key) {
             return dynamic_cast<Value*>(Map::remove(key));
+        }
+
+        void print() {
+            cout << "KV print\n";
+            Key* k;
+            Value* v;
+            for (int i = 0; i < len_; i++) {
+                k = dynamic_cast<Key*>(values_[i]->getKey());
+                cout << i << " " << k->name_->c_str() << endl << flush;
+            }
         }
 };
 
@@ -405,5 +416,79 @@ class OSMap : public Map {
          */
         virtual String* remove(Object* key) {
             return dynamic_cast<String*>(Map::remove(key));
+        }
+};
+
+class Integer : public Object {
+    public:
+        int val_;
+
+        Integer(int i) {
+            val_ = i;
+        }
+
+        Integer() {
+            val_ = 0;
+        }
+
+        int get() {
+            return val_;
+        }
+};
+
+class SIMap : public Map {
+    public:
+        SIMap(): Map() { }
+
+                /**
+         * @brief - Does this map contain value?
+         * 
+         * @param value - the value to search for
+         * @return true - if the value exists in this map
+         * @return false - if the value does not exist in this map
+         */
+        bool containsValue(int value) {
+            for (size_t i = 0; i < len_; i++) {
+                Integer* val = dynamic_cast<Integer*>(values_[i]->getValue());
+                if (val->get() == value) return true;
+            }
+            return false;
+        }
+
+        /**
+         * @brief - Get the value for the key.
+         * If the key does not exist, return a nullptr.
+         * 
+         * @param key - the key to return the value for.
+         * @return String* - the value that corresponds to key
+         */
+        virtual Integer* get(Object* key) {
+            if (!containsKey(key)) return nullptr;
+            return dynamic_cast<Integer*>(Map::get(key));
+        }
+
+        virtual void set(String& s, Integer* i) {
+            Map::put(&s, i);
+        }
+
+        /**
+         * @brief - Put the given key-value pair in this map.
+         * 
+         * @param key - the key to insert
+         * @param value - the value to insert
+         * @return String* - the previous value for the given key
+         */
+        virtual Integer* put(Object* key, int value) {
+            return dynamic_cast<Integer*>(Map::put(key, new Integer(value)));
+        }
+
+        /**
+         * @brief - Remove the key-value pair from this map.
+         * 
+         * @param key - the key to remove
+         * @return String* - the value of the key that was removed if exists, else nullptr
+         */
+        virtual Integer* remove(Object* key) {
+            return dynamic_cast<Integer*>(Map::remove(key));
         }
 };

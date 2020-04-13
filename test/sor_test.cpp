@@ -1,4 +1,6 @@
-#include "../src/sor.h"
+#include "test_util.h"
+
+#include "../src/dataframe/sor.h"
 
 using namespace std;
 
@@ -21,13 +23,11 @@ void sor_adapter() {
     //Check the row counts are all correct
     assert(df->nrows() == 1000);
     assert(df->ncols() == 10);
-    cout << "---SOR adapter passed---\n";
 }
 
 
 int main() {
     sor_adapter();
-
-    cout << "+++++++SOR adapter tests passed+++++++\n\n";
+    success("SOR");
     return 0;
 }

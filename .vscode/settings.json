@@ -1,0 +1,11 @@
+{
+    "files.associations": {
+        "ostream": "cpp",
+        "iosfwd": "cpp",
+        "locale": "cpp",
+        "filesystem": "cpp",
+        "stdexcept": "cpp",
+        "string": "cpp",
+        "new": "cpp"
+    }
+}

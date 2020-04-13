@@ -1,3 +1,5 @@
+#include "test_util.h"
+
 #include "../src/application/demo.h"
 #include <thread>
 
@@ -29,5 +31,6 @@ void threaded_test() {
 
 int main() {
     threaded_test();
+    success("M3");
     return 0;
 }

@@ -1,4 +1,6 @@
-#include "../src/sor.h"
+#include "test_util.h"
+
+#include "../src/dataframe/sor.h"
 
 using namespace std;
 
@@ -16,7 +18,6 @@ void parse_test() {
     assert(parse_bool(bool_str) == true);
     string bool_str_2 = string("0");
     assert(parse_bool(bool_str_2) == false);
-    cout << "---Parse passed---\n";
 }
 
 /** Tests type identification of strings and updating types, as well as type to char mappings */
@@ -50,7 +51,6 @@ void type_test() {
     assert(map_to_type('I') == INT);
     assert(map_to_type('S') == STRING);
     assert(map_to_type('D') == DOUBLE);
-    cout << "---Type passed---\n";
 }
 /** Tests the util trim function */
 void trim_test() {
@@ -63,15 +63,15 @@ void trim_test() {
     string str2 = string("  \"123  hello 1\"  ");
     trim(str2);
     assert(str2.compare(string("123  hello 1")) == 0);
-    cout << "---Trim passed---\n";
 }
 
 
 int main() {
     trim_test();
+    success("Util trim");
     parse_test();
+    success("Util parse");
     type_test();
-
-    cout << "+++++++Util tests passed+++++++\n\n";
+    success("Util type");
     return 0;
 }
