@@ -36,6 +36,10 @@ class Key : public Object, public Serializable {
             delete name_;
         }
 
+        Object* clone() {
+            return new Key(name_->clone()->c_str(), node_);
+        }
+
         bool equals(Object  * other) {
             if (this == other) return true;
             Key* o = dynamic_cast<Key*>(other);

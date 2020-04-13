@@ -189,6 +189,7 @@ public:
   /** Compute DEGREES of Linus.  */
   void run_() override {
     readInput();
+    kv.kv_map_.print();
     for (size_t i = 0; i < DEGREES; i++) step(i);
   }
 
@@ -202,36 +203,39 @@ public:
     Key pK("projs");
     Key uK("usrs");
     Key cK("comts");
+    
     if (idx_ == 0) {
       pln("Reading...");
 
       SorAdapter* sor_projects = new SorAdapter(0, UINT32_MAX, strdup(PROJ));
       projects = sor_projects->df_; //DataFrame::fromFile(PROJ, pK.clone(), &kv);
       unsigned char* blob = projects->serialize();
-      kv.put(pK, new Value(blob, strlen((char*)blob)));
+      kv.put(*dynamic_cast<Key*>(pK.clone()), new Value(blob, strlen((char*)blob)));
       p("    ").p(projects->nrows()).pln(" projects");
 
       SorAdapter* sor_users = new SorAdapter(0, UINT32_MAX, strdup(USER));
       users = sor_users->df_; //DataFrame::fromFile(USER, uK.clone(), &kv);
       blob = users->serialize();
-      kv.put(uK, new Value(blob, strlen((char*)blob)));
+      kv.put(*dynamic_cast<Key*>(uK.clone()), new Value(blob, strlen((char*)blob)));
       p("    ").p(users->nrows()).pln(" users");
 
       SorAdapter* sor_commits = new SorAdapter(0, UINT32_MAX, strdup(COMM));
       commits = sor_commits->df_; //DataFrame::fromFile(COMM, cK.clone(), &kv);
       blob = commits->serialize();
-      kv.put(cK, new Value(blob, strlen((char*) blob)));
+      kv.put(*dynamic_cast<Key*>(cK.clone()), new Value(blob, strlen((char*) blob)));
       p("    ").p(commits->nrows()).pln(" commits");
-
        // This dataframe contains the id of Linus.
-       delete DataFrame::fromScalar(new Key("users-0-0"), &kv, LINUS);
+       //delete
+      DataFrame::fromScalar(new Key("users-0-0"), &kv, LINUS);
     } else {
        projects = dynamic_cast<DataFrame*>(kv.waitAndGet(pK));
        users = dynamic_cast<DataFrame*>(kv.waitAndGet(uK));
        commits = dynamic_cast<DataFrame*>(kv.waitAndGet(cK));
     }
+    kv.kv_map_.print();
     uSet = new Set(users);
     pSet = new Set(projects);
+    kv.kv_map_.print();
  }
 
  /** Performs a step of the linus calculation. It operates over the three
