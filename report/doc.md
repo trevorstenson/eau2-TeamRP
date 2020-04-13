@@ -33,6 +33,9 @@ The eau2 system will mainly be used for distributed computing on large datasets.
 
 From here, a user can specify operations they wish to perform on the data. The operations that need to be supported are not fully specified yet, and this is one of our groups’ open questions. Therefore, the exact eau2 API is not fully fleshed out, but in general, it allows for operating on large datasets. We expect to have to support iterating through the DataFrame in a similar fashion to Rower and Fielder from previous assignments.
 
+Currently, we have provided application code for two realistic use-cases. The first application reads in a text file and counts the occurrences for each unique word. 
+The second application accomplishes the much more difficult task of computing all github users who have worked on software projects in some capacity with Linus Torvalds up to seven degrees away.
+
 #
 
 ### Open Questions
@@ -49,7 +52,10 @@ To start, the schema-on-read adapter has been hooked up to our original DataFram
 
 Additionally, the network layer has been built, including the serialization of all messages and data types needed for communication among nodes. However, the actual logic to connect and pass data between nodes has not been implemented. 
 
-The distributed KVStore has been brought together for full networking functionality. Currently the code samples provided through milestone three run properly with our system. Milestone 4 runs from a networking perspective, but do to memory issues with the DataFrame::fromVisitor method, we cannot run the example provided. Instead, we have implemented a simplified version that does not require the DataFrame::fromVisitor method. Our goal for next week is to fix this memory issue and fully implement 7 degrees on Linus! 
+The distributed KVStore has been brought together for full networking functionality. Currently the code samples provided through milestone three run properly with our system. Milestone 4 runs from a networking perspective, but due to memory issues with the DataFrame::fromVisitor method, we cannot run the example provided. Instead, we have implemented a simplified version that does not require the DataFrame::fromVisitor method. 
 
-	
-
+For Milestone 5, we have successfully implemented basic functionality for the Linus application by building upon the starter code provided. 
+Currently, our application successfully runs on a single node without any networking functionality for a subset of data. 
+We decided to first implement it this way because we were not fully confident in our networking layer's reliability due to both connectivity issues during network setup, as well as a lack of failure mechanisms when data happened to be lost. 
+Because the Linus application requires so much data to fully process the result, we did not trust our initial networking layer to handle that load. 
+Additionally, it was much easier to debug the Linus functionality without worrying about any potential networking issues popping up.
