@@ -512,11 +512,7 @@ public:
     static DataFrame *fromVisitor(Key *key, KVStore *kv, const char* type, Visitor* v) {
         Schema* newSchema = new Schema(type);
         Row* r = new Row(*newSchema);
-        std::cout << "before visit cols: \n";
-        r->print();
         v->visit(*r);
-        std::cout << "after visit cols: \n";
-        r->print();
         DataFrame* newDf = new DataFrame(*newSchema);
         newDf->add_row(*r);
         unsigned char* serial = newDf->serialize();

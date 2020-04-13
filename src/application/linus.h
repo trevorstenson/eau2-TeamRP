@@ -49,17 +49,25 @@ public:
 
   /** Is idx in the set?  See comment for set(). */
   bool test(size_t idx) {
-    if (idx >= size_) return true; // ignoring out of bound reads
+    if (idx >= size_) return false; // ignoring out of bound reads
     return vals_[idx];
   }
 
   size_t size() { return size_; }
 
+  size_t taggedSize() {
+    size_t total = 0;
+    for (int i = 0; i < size(); i++) {
+      if (test(i)) total++;
+    }
+    return total;
+  }
+
   /** Performs set union in place. */
   void union_(Set& from) {
     for (size_t i = 0; i < from.size_; i++) 
       if (from.test(i))
-	  set(i);
+	      set(i);
   }
 };
 
@@ -99,7 +107,9 @@ public:
     return i_ == set_.size_;
   }
 
-  void visit(Row & row) { row.set(0, i_++); }
+  void visit(Row & row) { 
+    row.set(0, i_++); 
+  }
 };
 
 // /***************************************************************************
@@ -129,7 +139,7 @@ public:
     int uid = row.get_int(1);
     if (uSet.test(uid)) 
       if (!pSet.test(pid)) {
-    	pSet.set(pid);
+    	  pSet.set(pid);
         newProjects.set(pid);
       }
     return false;
@@ -158,8 +168,8 @@ public:
     int uid = row.get_int(1);
     if (pSet.test(pid)) 
       if(!uSet.test(uid)) {
-	uSet.set(uid);
-	newUsers.set(uid);
+        uSet.set(uid);
+        newUsers.set(uid);
       }
     return false;
   }
@@ -244,12 +254,19 @@ public:
     Key uK(StrBuff("users-").c(stage).c("-0").get());
     // A df with all the users added on the previous round
     DataFrame* newUsers = dynamic_cast<DataFrame*>(kv.waitAndGet(uK));    
+    cout << newUsers->nrows() << endl;
     Set delta(users);
+    cout << "TS1: " << delta.taggedSize() << endl;
     SetUpdater upd(delta);  
     newUsers->map(upd); // all of the new users are copied to delta.
+    cout << "TS2: " << delta.taggedSize() << endl;
     delete newUsers;
+    cout << "TS3: " << pSet->taggedSize() << endl;
     ProjectsTagger ptagger(delta, *pSet, projects);
     commits->map(ptagger); //local_map(ptagger); // marking all projects touched by delta
+    cout << "TS4: " << pSet->taggedSize() << endl;
+
+
     merge(ptagger.newProjects, "projects-", stage);
     pSet->union_(ptagger.newProjects); // 
     UsersTagger utagger(ptagger.newProjects, *uSet, users);
@@ -257,8 +274,8 @@ public:
     merge(utagger.newUsers, "users-", stage + 1);
     uSet->union_(utagger.newUsers);
     p("    after stage ").p(stage).pln(":");
-    p("        tagged projects: ").pln(pSet->size());
-    p("        tagged users: ").pln(uSet->size());
+    p("        tagged projects: ").pln(pSet->taggedSize());//->size());
+    p("        tagged users: ").pln(uSet->taggedSize());//size());
   }
 
   /** Gather updates to the given set from all the nodes in the systems.
