@@ -99,7 +99,7 @@ public:
     return i_ == set_.size_;
   }
 
-  bool accept(Row & row) { row.set(0, i_++); }
+  void visit(Row & row) { row.set(0, i_++); }
 };
 
 // /***************************************************************************

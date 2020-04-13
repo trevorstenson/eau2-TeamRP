@@ -97,6 +97,7 @@ public:
     * of the requested type, the result is undefined. */
     int get_int(size_t col) {
         if (schema_->col_type(col) == 'I') {
+            std::cout << "memaddr: " << columns_[col] << std::endl << std::flush;
             if (columns_[col]->get_type() == 'I') {
                 return columns_[col]->as_int()->get(0);
             }
@@ -194,7 +195,8 @@ public:
     void print() {
         std::cout << "------" << std::endl;
         for (size_t i = 0; i < width_; i++) {
-            columns_[i]->print();
+            //columns_[i]->print();
+            std::cout << columns_[i] << std::endl << std::flush;
         }
         std::cout << "------" << std::endl;
     }
