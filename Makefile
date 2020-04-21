@@ -1,3 +1,7 @@
+distributed:
+	g++ -g -pthread -w  -std=c++11 test/distributed.cpp -o distributed
+	./distributed
+
 milestone:
 	g++ -g -pthread -w -std=c++11 test/milestone5.cpp -o m5
 	./m5
@@ -39,5 +43,6 @@ clean:
 	rm ./m4 || true
 	rm ./m5 || true
 	rm wordcount.txt || true
+	rm ./distributed || true
 	
 .PHONY: build test clean

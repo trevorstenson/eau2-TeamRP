@@ -242,6 +242,19 @@ class SorAdapter {
             build_DataFrame(file, from, length);
         }
 
+        SorAdapter(
+            unsigned int from,
+            unsigned int length,
+            char* filename,
+            int numNodes,
+            KVStore& kv,
+            String* uid
+        ) {
+            string file = string(filename);
+            Schema* schema = infer_schema(file, from, length);
+            df_ = new DistributedDataFrame(*schema, numNodes, kv, uid);
+        }
+
         Schema* infer_schema(string filename, unsigned int from, unsigned int length) {
             //create the filestream and skip to the proper location in the file
             fstream fin(filename, fstream::in);
@@ -303,3 +316,11 @@ class SorAdapter {
             delete df_;
         }
 };
+
+static DataFrame* DataFrame::fromFile(const char* file, Key &key, KVStore &kv, int numNodes) {
+    String* id = key->name_->clone();
+    SorAdapter* s = new SorAdapter(0, UINT32_MAX, file, numNodes, kv, id);
+    DataFrame* df = s->get_df();
+    kv.put(k, df);
+    return df;
+}
