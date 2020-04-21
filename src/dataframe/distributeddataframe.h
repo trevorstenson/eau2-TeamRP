@@ -42,6 +42,8 @@ class DistributedDataFrame : public DataFrame {
 
         void set(size_t col, size_t row, bool val) {
             DataFrame* df = getDFwithRow(row);
+            printf("done with getting df\n");
+            fflush(stdout);
             df->set(col, getInternalRow(row), val);
             setDFwithRow(row, df);
         }
@@ -73,15 +75,12 @@ class DistributedDataFrame : public DataFrame {
         }
 
         DataFrame* getDFwithRow(size_t row) {
-            printf("nice");
             if (std::find(sub_ids.begin(), sub_ids.end(), getDFid(row)) != sub_ids.end()) {
-                printf("nice2");
                 Key* k = createKeyFromRow(row);
                 DataFrame* df = kv_->waitAndGet(*k);
                 delete k;
                 return df;
             }
-            printf("nice3");
             return new DataFrame(*schema);
         }
 

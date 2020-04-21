@@ -262,14 +262,21 @@ public:
         }
     }
     virtual void set(size_t col, size_t row, bool val) {
+        printf("in set for bool\n");
         checkIndices(col, row, 'B');
         schema->new_length(row);
+        printf("after schema access\n");
+        fflush(stdout);
         BoolColumn *column = columns[col]->as_bool();
+        printf("after get column\n");
+        fflush(stdout);
         if (!column) {
             assert("Unable to cast as BoolColumn." && false);
         } else {
             column->set(row, val);
         }
+        printf("done with method set\n");
+        fflush(stdout);
     }
     virtual void set(size_t col, size_t row, double val) {
         checkIndices(col, row, 'D');
