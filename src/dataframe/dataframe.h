@@ -754,7 +754,7 @@ inline void KVStore::configure(const char* ip, int port, const char* serverIp, i
     nconfig_.running = false;
     nconfig_.listenToServerThread = nullptr;
     nconfig_.listenToNeighborsThread = nullptr;
-    registerWithServer();
+    //registerWithServer();
 }
 
 inline void KVStore::configure(const char* ip, const char* serverIp, int serverPort) {
