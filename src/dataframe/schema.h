@@ -57,8 +57,8 @@ class Schema : public Object, public Serializable {
         n_col = strlen(types_);
         size_t capacity = n_col < 4 ? 4 : n_col;
         col_cap = capacity;
-        types = new char[col_cap];
-        for (int i = 0; i < col_cap; i++) types[i] = '\0';
+        types = new char[col_cap + 1];
+        for (int i = 0; i < col_cap + 1; i++) types[i] = '\0';
         strcpy(types, types_);
         n_row = 0;
       } else {

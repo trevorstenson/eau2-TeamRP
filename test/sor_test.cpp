@@ -18,11 +18,16 @@ void sor_adapter() {
     assert(df->get_int(7, 723) == 7237);
     assert(df->get_bool(0, 747) == true);
     assert(df->get_bool(4, 842) == false);
-    assert(df->get_string(6, 747)->equals(new String("qhmwxttofqrwxqo")));
-    assert(df->get_string(2, 973)->equals(new String("pklrcomvikpjzpx")));
+    String* s1 = new String("qhmwxttofqrwxqo");
+    String* s2 = new String("pklrcomvikpjzpx");
+    assert(df->get_string(6, 747)->equals(s1));
+    assert(df->get_string(2, 973)->equals(s2));
     //Check the row counts are all correct
     assert(df->nrows() == 1000);
     assert(df->ncols() == 10);
+    delete sor;
+    delete s1;
+    delete s2;
 }
 
 

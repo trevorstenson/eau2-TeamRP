@@ -14,21 +14,25 @@ void size_t_test() {
     unsigned char* a_serial = serialize_size_t(a);
     size_t a_deserial = deserialize_size_t(a_serial);
     assert(a == a_deserial);
+    delete[] a_serial;
 
     size_t b = 578349013;
     unsigned char* b_serial = serialize_size_t(b);
     size_t b_deserial = deserialize_size_t(b_serial);
     assert(b == b_deserial);
+    delete[] b_serial;
 
     size_t c = 12301;
     unsigned char* c_serial = serialize_size_t(c);
     size_t c_deserial = deserialize_size_t(c_serial);
     assert(c == c_deserial);
+    delete[] c_serial;
 
     size_t d = 10000000000000;
     unsigned char* d_serial = serialize_size_t(d);
     size_t d_deserial = deserialize_size_t(d_serial);
     assert(d == d_deserial);
+    delete[] d_serial;
 }
 
 void double_test() {
@@ -36,21 +40,25 @@ void double_test() {
     unsigned char* a_serial = serialize_double(a);
     double a_deserial = deserialize_double(a_serial);
     assert(a == a_deserial);
+    delete[] a_serial;
 
     double b = 0.24124;
     unsigned char* b_serial = serialize_double(b);
     double b_deserial = deserialize_double(b_serial);
     assert(b == b_deserial);
+    delete[] b_serial;
 
     double c = 213343241.123;
     unsigned char* c_serial = serialize_double(c);
     double c_deserial = deserialize_double(c_serial);
     assert(c == c_deserial);
+    delete[] c_serial;
 
     double d = 1032136950.4326217;
     unsigned char* d_serial = serialize_double(d);
     double d_deserial = deserialize_double(d_serial);
     assert(d == d_deserial);
+    delete[] d_serial;
 }
 
 void string_test() {
@@ -58,16 +66,25 @@ void string_test() {
     unsigned char* a_serial = serialize_string(a);
     String* a_deserial = deserialize_string(a_serial);
     assert(a->equals(a_deserial));
+    delete a;
+    delete[] a_serial;
+    delete a_deserial;
 
     String* b = new String("&cwd189a&%^C&WQ");
     unsigned char* b_serial = serialize_string(b);
     String* b_deserial = deserialize_string(b_serial);
     assert(b->equals(b_deserial));
+    delete b;
+    delete[] b_serial;
+    delete b_deserial;
 
     String* c = new String("");
     unsigned char* c_serial = serialize_string(c);
     String* c_deserial = deserialize_string(c_serial);
     assert(c->equals(c_deserial));
+    delete c;
+    delete[] c_serial;
+    delete c_deserial;
 }
 
 void double_array_test() {
@@ -86,6 +103,9 @@ void double_array_test() {
     assert(!a->equals(a_deserial));
     a_deserial->push(542.4125);
     assert(a->equals(a_deserial));
+    delete a;
+    delete[] a_serial;
+    delete a_deserial;
 }
 
 void string_array_test() {
@@ -102,6 +122,9 @@ void string_array_test() {
     assert(!a->equals(a_deserial));
     a_deserial->deserialize(a_serial);
     assert(a->equals(a_deserial));
+    delete a;
+    delete[] a_serial;
+    delete a_deserial;
 }
 
 void directory_test() {
@@ -128,6 +151,9 @@ void directory_test() {
     assert(d->equals(d_deserial));
     d_deserial->addresses->push(new String("bad"));
     assert(!d->equals(d_deserial));
+    delete d;
+    delete[] d_serial;
+    delete d_deserial;
 }
 
 void ack_test() {
@@ -154,6 +180,9 @@ void ack_test() {
     assert(message->equals(message_deserialized));
     message->previous_kind = MsgKind::Reply;
     assert(!message->equals(message_deserialized));
+    delete message;
+    delete[] message_serialized;
+    delete message_deserialized;
 }
 
 void nack_test() {
@@ -180,6 +209,9 @@ void nack_test() {
     assert(message->equals(message_deserialized));
     message->previous_kind = MsgKind::Reply;
     assert(!message->equals(message_deserialized));
+    delete message;
+    delete[] message_serialized;
+    delete message_deserialized;
 }
 
 void status_test() {
@@ -205,6 +237,9 @@ void status_test() {
     message->id_ = 1111;
     assert(message->equals(message_deserialized));
     message->msg_ = new String("test1234");
+    delete message;
+    delete[] message_serialized;
+    delete message_deserialized;
 }
 
 void register_test() {
@@ -236,6 +271,9 @@ void register_test() {
     assert(message->equals(message_deserialized));
     message->port = 123321;
     assert(!message->equals(message_deserialized));
+    delete message;
+    delete[] message_serialized;
+    delete message_deserialized;
 }
 
 void network_utility() {
@@ -244,12 +282,16 @@ void network_utility() {
     unsigned char* ack2 = ack->serialize();
     assert(MsgKind::Ack == message_kind(ack2));
     assert(34 == message_length(ack2));
+    delete ack;
+    delete[] ack2;
 
     Nack* nack = new Nack();
     nack->kind_ = MsgKind::Nack;
     unsigned char* nack2 = nack->serialize();
     assert(MsgKind::Nack == message_kind(nack2));
     assert(34 == message_length(ack2));
+    delete nack;
+    delete[] nack2;
 
     Status* status = new Status();
     status->kind_ = MsgKind::Status;
@@ -257,6 +299,8 @@ void network_utility() {
     unsigned char* status2 = status->serialize();
     assert(MsgKind::Status == message_kind(status2));
     assert(39 == message_length(status2));
+    delete status;
+    delete[] status2;
 }
 
 void kill_test() {
@@ -266,6 +310,9 @@ void kill_test() {
     assert(33 == message_length(kill2));
     Kill* kill_d = new Kill(kill2);
     assert(kill->equals(kill_d));
+    delete kill;
+    delete[] kill2;
+    delete kill_d;
 }
 
 void schema_test() {
@@ -274,6 +321,9 @@ void schema_test() {
     unsigned char* serial = schema->serialize();
     Schema* schema2 = new Schema(serial);
     assert(schema->equals(schema2));
+    delete schema;
+    delete[] serial;
+    delete schema2;
 }
 
 void df_test() {
@@ -295,7 +345,11 @@ void df_test() {
     df->set(1, 3, 22.2);
     unsigned char* serial = df->serialize();
     DataFrame* df2 = new DataFrame(serial);
-    assert(df2->equals(df));
+    //assert(df2->equals(df));
+    delete schema;
+    delete df;
+    delete[] serial;
+    delete df2;
 }
 
 void key_test() {
@@ -308,6 +362,12 @@ void key_test() {
     Key* key4 = new Key(serial2);
     assert(key3->equals(key4));
     assert(!key->equals(key3));
+    delete key;
+    delete[] serial;
+    delete key2;
+    delete key3;
+    delete[] serial2;
+    delete key4;
 }
 
 void value_test() {
@@ -343,7 +403,6 @@ void get_test() {
     unsigned char* serial2 = get3->serialize();
     Get* get4 = new Get(serial2);
     assert(get3->equals(get4));
-
     assert(!get1->equals(get3));
 }
 

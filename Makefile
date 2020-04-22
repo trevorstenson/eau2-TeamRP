@@ -36,6 +36,12 @@ test:
 	./sor_test
 	./dataframe_test
 
+valgrind:
+	valgrind --leak-check=full ./serial_test
+	valgrind --leak-check=full ./util_test
+	valgrind --leak-check=full ./sor_test
+	valgrind --leak-check=full ./dataframe_test
+
 clean:
 	rm *.sor || true
 	rm -r *.dSYM || true
