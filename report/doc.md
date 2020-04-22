@@ -16,14 +16,14 @@ Because the Linus application requires so much data to fully process the result,
 Additionally, it was much easier to debug the Linus functionality without worrying about any potential networking issues popping up.
 A summary of completed components is below. 
 
-## Completed components
+#### Completed components
 * SOR adapter is integrated with DataFrame
 * Processing of DataFrames with Fielders, Rowers, and Visitors
 * Serialization of DataFrames and Messages
 * Exchange of DataFrames between KVStores on separate nodes, however inconsistently (Demo-able with M4 WordCount)
 * Linus has been adapted to our implementation, however it will only successfully run on 1 node
 
-## Outstanding issues
+#### Outstanding issues
 * Networking inconsistencies
 
 #
