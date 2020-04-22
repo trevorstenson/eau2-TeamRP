@@ -127,13 +127,10 @@ class IntColumn : public Column {
 
   /**Ensures the smaller subarray is large enough/instantiated. */
   void ensureSubArray(size_t idx) {
-    fflush(stdout);
     size_t arrayIndex = getParentIndex(idx);
     if (vals_[arrayIndex] == nullptr) {
       int count = (int)pow(2, arrayIndex);
-      fflush(stdout);
       vals_[arrayIndex] = new int[count];
-      fflush(stdout);
     }
   }
 
@@ -278,9 +275,7 @@ class BoolColumn : public Column {
 
   /** Set value at idx. An out of bound idx is undefined.  */
   void set(size_t idx, bool val) {
-    fflush(stdout);
     ensureSubArray(idx);
-    fflush(stdout);
     if (idx >= len_) {
       for (size_t i = len_; i < idx; i++) {
         ensureSubArray(i);
