@@ -200,6 +200,9 @@ public:
     }
 
     ~Row() {
+        // for (int i = 0; i < width_; i++) {
+        //     delete columns_[i];
+        // }
         delete[] columns_;
     }
 };

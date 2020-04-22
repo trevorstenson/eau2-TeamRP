@@ -29,7 +29,15 @@ test:
 	./dataframe_test
 
 valgrind:
-	valgrind --leak-check=full ./df_test
+	# g++ -g -pthread -w -std=c++11 test/milestone5.cpp -o m5
+	# valgrind --leak-check=full ./m5
+	g++ -g -pthread -w -std=c++11 test/util_test.cpp -o util_test
+	g++ -g -pthread -w -std=c++11 test/sor_test.cpp -o sor_test
+	g++ -g -pthread -w -std=c++11 test/dataframe_test.cpp -o dataframe_test
+	valgrind --leak-check=full ./util_test
+	valgrind --leak-check=full ./sor_test
+	valgrind --leak-check=full ./dataframe_test
+
 
 clean:
 	rm *.sor || true

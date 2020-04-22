@@ -94,6 +94,9 @@ class Map: public Object {
          * NOTE: Objects inside the Map will NOT be freed
          */
         ~Map() {
+            for (int i = 0; i < len_; i++) {
+                delete values_[i];
+            }
             delete[] values_;
         }
 
@@ -359,6 +362,10 @@ class KVMap : public Map {
                 k = dynamic_cast<Key*>(values_[i]->getKey());
                 cout << i << " " << k->name_->c_str() << endl << flush;
             }
+        }
+
+        ~KVMap() {
+
         }
 };
 

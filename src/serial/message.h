@@ -193,6 +193,11 @@ class Put : public Message {
             deserialize(buffer);
         }
 
+        ~Put() {
+            delete key_;
+            delete value_;
+        }
+
         /** Serializes this Put, structure is as follows:
          * |--8 byte-------|--25 bytes----------|--Unknown bytes---------|--Unknown bytes----|
          * |--Total bytes--|--Message data------|--Key-------------------|--Value------------|
@@ -258,6 +263,10 @@ class Result : public Message {
             deserialize(buffer);
         }
 
+        ~Result() {
+            delete value_;
+        }
+
         /** Serializes this Result, structure is as follows:
          * |--8 byte-------|--25 bytes----------|--Unknown bytes---------|
          * |--Total bytes--|--Message data------|--Key-------------------|
@@ -314,6 +323,10 @@ class Get : public Message {
 
         Get(unsigned char* buffer) {
             deserialize(buffer);
+        }
+
+        ~Get() {
+            delete key_;
         }
 
         /** Serializes this Get, structure is as follows:
@@ -419,6 +432,10 @@ class Status : public Message {
             deserialize(buffer);
         }
 
+        ~Status() {
+            delete msg_;
+        }
+
         /** Serializes this Ack, structure is as follows:
          * |--8 bytes------|--25 bytes----------|--unknown bytes--|
          * |--Total bytes--|--Message data------|--msg_-----------|
@@ -473,6 +490,10 @@ class Register : public Message {
 
         Register(unsigned char* buffer) {
             deserialize(buffer);
+        }
+
+        ~Register() {
+            delete IP;
         }
 
         /** Serializes this Ack, structure is as follows:
@@ -537,6 +558,11 @@ class Directory : public Message {
 
         Directory(unsigned char * buffer) {
             deserialize(buffer);
+        }
+
+        ~Directory() {
+            delete[] ports;
+            delete addresses;
         }
 
         void push_port(size_t s) {

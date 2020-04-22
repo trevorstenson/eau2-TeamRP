@@ -4,6 +4,7 @@
 void linus_test() {
     Linus* l1 = new Linus(0);
     l1->run_();
+    delete l1;
 }
 
 int main() {

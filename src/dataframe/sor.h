@@ -6,6 +6,7 @@
 #include <vector>
 #include "../type.h"
 #include "dataframe.h"
+#include "distributeddataframe.h"
 
 using namespace std;
 
@@ -317,10 +318,10 @@ class SorAdapter {
         }
 };
 
-static DataFrame* DataFrame::fromFile(const char* file, Key &key, KVStore &kv, int numNodes) {
-    String* id = key->name_->clone();
-    SorAdapter* s = new SorAdapter(0, UINT32_MAX, file, numNodes, kv, id);
-    DataFrame* df = s->get_df();
-    kv.put(k, df);
-    return df;
-}
+// static DataFrame* DataFrame::fromFile(const char* file, Key &key, KVStore &kv, int numNodes) {
+//     String* id = key->name_->clone();
+//     SorAdapter* s = new SorAdapter(0, UINT32_MAX, file, numNodes, kv, id);
+//     DataFrame* df = s->get_df();
+//     kv.put(k, df);
+//     return df;
+// }

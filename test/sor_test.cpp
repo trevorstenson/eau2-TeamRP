@@ -9,6 +9,8 @@ void sor_adapter() {
     SorAdapter* sor = new SorAdapter(0, UINT32_MAX, "test1000.sor");
     DataFrame* df = sor->df_;
     //Checking the schema is correct
+    std::cout << df->get_schema().types << "\n";
+    fflush(stdout);
     assert(strcmp(df->get_schema().types, "BDSIBDSIBD") == 0);
     //Checking the data is correct
     assert(df->get_double(1, 0) == 0.01);

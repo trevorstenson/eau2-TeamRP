@@ -209,6 +209,14 @@ public:
   Linus(size_t idx): Application(idx) {}
   //Linus(size_t idx, NetworkIfc& net): Application(idx, net) {}
 
+  ~Linus() {
+    delete projects;
+    delete users;
+    delete commits;
+    delete uSet;
+    delete pSet;
+  }
+
   /** Compute DEGREES of Linus.  */
   void run_() override {
     readInput();
@@ -234,20 +242,22 @@ public:
       unsigned char* blob = projects->serialize();
       kv.put(*dynamic_cast<Key*>(pK.clone()), new Value(blob, strlen((char*)blob)));
       p("    ").p(projects->nrows()).pln(" projects");
+      //delete sor_projects;
 
       SorAdapter* sor_users = new SorAdapter(0, UINT32_MAX, strdup(USER));
       users = sor_users->df_; //DataFrame::fromFile(USER, uK.clone(), &kv);
       blob = users->serialize();
       kv.put(*dynamic_cast<Key*>(uK.clone()), new Value(blob, strlen((char*)blob)));
       p("    ").p(users->nrows()).pln(" users");
+      //delete sor_users;
 
       SorAdapter* sor_commits = new SorAdapter(0, UINT32_MAX, strdup(COMM));
       commits = sor_commits->df_; //DataFrame::fromFile(COMM, cK.clone(), &kv);
       blob = commits->serialize();
       kv.put(*dynamic_cast<Key*>(cK.clone()), new Value(blob, strlen((char*) blob)));
       p("    ").p(commits->nrows()).pln(" commits");
+      //delete sor_commits;
        // This dataframe contains the id of Linus.
-       //delete
       DataFrame::fromScalar(new Key("users-0-0"), &kv, LINUS);
     } else {
        projects = dynamic_cast<DataFrame*>(kv.waitAndGet(pK));

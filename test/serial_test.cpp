@@ -68,6 +68,12 @@ void string_test() {
     unsigned char* c_serial = serialize_string(c);
     String* c_deserial = deserialize_string(c_serial);
     assert(c->equals(c_deserial));
+    delete a;
+    delete a_deserial;
+    delete b;
+    delete b_deserial;
+    delete c;
+    delete c_deserial;
 }
 
 void double_array_test() {
@@ -86,6 +92,8 @@ void double_array_test() {
     assert(!a->equals(a_deserial));
     a_deserial->push(542.4125);
     assert(a->equals(a_deserial));
+    delete a;
+    delete a_deserial;
 }
 
 void string_array_test() {
@@ -102,6 +110,9 @@ void string_array_test() {
     assert(!a->equals(a_deserial));
     a_deserial->deserialize(a_serial);
     assert(a->equals(a_deserial));
+    delete a_deserial;
+    delete a;
+    delete a_serial;
 }
 
 void directory_test() {
@@ -128,6 +139,8 @@ void directory_test() {
     assert(d->equals(d_deserial));
     d_deserial->addresses->push(new String("bad"));
     assert(!d->equals(d_deserial));
+    delete d_deserial;
+    delete d;
 }
 
 void ack_test() {
@@ -154,6 +167,8 @@ void ack_test() {
     assert(message->equals(message_deserialized));
     message->previous_kind = MsgKind::Reply;
     assert(!message->equals(message_deserialized));
+    delete message;
+    delete message_deserialized;
 }
 
 void nack_test() {
@@ -180,6 +195,8 @@ void nack_test() {
     assert(message->equals(message_deserialized));
     message->previous_kind = MsgKind::Reply;
     assert(!message->equals(message_deserialized));
+    delete message;
+    delete message_deserialized;
 }
 
 void status_test() {
@@ -205,6 +222,8 @@ void status_test() {
     message->id_ = 1111;
     assert(message->equals(message_deserialized));
     message->msg_ = new String("test1234");
+    delete message;
+    delete message_deserialized;
 }
 
 void register_test() {
@@ -236,6 +255,8 @@ void register_test() {
     assert(message->equals(message_deserialized));
     message->port = 123321;
     assert(!message->equals(message_deserialized));
+    delete message;
+    delete message_deserialized;
 }
 
 void network_utility() {
@@ -257,6 +278,9 @@ void network_utility() {
     unsigned char* status2 = status->serialize();
     assert(MsgKind::Status == message_kind(status2));
     assert(39 == message_length(status2));
+    delete ack;
+    delete nack;
+    delete status;
 }
 
 void kill_test() {
@@ -266,6 +290,8 @@ void kill_test() {
     assert(33 == message_length(kill2));
     Kill* kill_d = new Kill(kill2);
     assert(kill->equals(kill_d));
+    delete kill;
+    delete kill_d;
 }
 
 void schema_test() {
@@ -274,6 +300,8 @@ void schema_test() {
     unsigned char* serial = schema->serialize();
     Schema* schema2 = new Schema(serial);
     assert(schema->equals(schema2));
+    delete schema;
+    delete schema2;
 }
 
 void df_test() {
@@ -296,6 +324,8 @@ void df_test() {
     unsigned char* serial = df->serialize();
     DataFrame* df2 = new DataFrame(serial);
     assert(df2->equals(df));
+    delete df;
+    delete df2;
 }
 
 void key_test() {
@@ -308,6 +338,10 @@ void key_test() {
     Key* key4 = new Key(serial2);
     assert(key3->equals(key4));
     assert(!key->equals(key3));
+    delete key;
+    delete key2;
+    delete key3;
+    delete key4;
 }
 
 void value_test() {
@@ -320,6 +354,10 @@ void value_test() {
     Value* value4 = new Value(serial2);
     assert(value3->equals(value4));
     assert(!value->equals(value3));
+    delete value;
+    delete value2;
+    delete value3;
+    delete value4;
 }
 
 void put_test() {
@@ -329,6 +367,10 @@ void put_test() {
     unsigned char* serial = put1->serialize();
     Put* put2 = new Put(serial);
     assert(put1->equals(put2));
+    delete key;
+    delete value;
+    delete put1;
+    delete put2;
 }
 
 void get_test() {
@@ -345,6 +387,12 @@ void get_test() {
     assert(get3->equals(get4));
 
     assert(!get1->equals(get3));
+    delete key;
+    delete get1;
+    delete get2;
+    delete key2;
+    delete get3;
+    delete get4;
 }
 
 void result_test() {
@@ -361,6 +409,12 @@ void result_test() {
     assert(res3->equals(res4));
 
     assert(!res1->equals(res3));
+    delete value;
+    delete res1;
+    delete res2;
+    delete value2;
+    delete res3;
+    delete res4;
 }
 
 int main() {

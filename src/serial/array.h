@@ -191,7 +191,7 @@ class DoubleArray : public Object, public Serializable  {
             delete[] vals_;
         }
 
-        DoubleArray(Column* c): DoubleArray(c->size()) {
+        DoubleArray(Column* c) : DoubleArray(c->size()) {
             BoolColumn* x;
             IntColumn* y;
             DoubleColumn* z;

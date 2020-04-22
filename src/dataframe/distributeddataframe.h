@@ -42,8 +42,6 @@ class DistributedDataFrame : public DataFrame {
 
         void set(size_t col, size_t row, bool val) {
             DataFrame* df = getDFwithRow(row);
-            printf("done with getting df\n");
-            fflush(stdout);
             df->set(col, getInternalRow(row), val);
             setDFwithRow(row, df);
         }
