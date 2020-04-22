@@ -491,4 +491,19 @@ class SIMap : public Map {
         virtual Integer* remove(Object* key) {
             return dynamic_cast<Integer*>(Map::remove(key));
         }
+
+        void print() {
+            Pair* p;
+            String* key;
+            Integer* val;
+            std::cout << "Printing map\n";
+            for (int i = 0; i < len_; i++) {
+                p = values_[i];
+                key = dynamic_cast<String*>(p->getKey());
+                assert(key != nullptr);
+                val = get(key);
+                assert(val != nullptr);
+                std::cout << key->c_str() << " " << val->val_ << endl;
+            }
+        }
 };
