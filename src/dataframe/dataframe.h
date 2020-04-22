@@ -697,12 +697,10 @@ inline bool KVStore::containsKey(Key *k) {
 inline Value *KVStore::put(Key &k, Value *v) {
     // data is stored in local kvstore
     if (idx_ == k.node_) {
+        std::cout << "Storing key " << k.name_->c_str() << " on node " << idx_ << std::endl;
         return kv_map_.put(&k, v);
     } else {
-        // Send the data to the correct node 
-        std::cout << "1" << endl << flush;
         Put* p = new Put(idx_, k.node_, 1234, &k, v);
-        std::cout << k.node_ << endl << flush;
         sendToNeighbor(nconfig_.neighborSockets[k.node_], p->serialize());
         return nullptr;
     }
@@ -723,9 +721,13 @@ inline DataFrame *KVStore::get(Key &k) {
     }
 }
 inline DataFrame *KVStore::waitAndGet(Key &k) {
-    // data is stored in local kvstore
+    // Data should be stored in local kvstore
     if (idx_ == k.node_) {
-        Value *received = kv_map_.get(&k);
+        Value *received = nullptr;
+        while (received == nullptr) {
+            usleep(250000);
+            received = kv_map_.get(&k);
+        }
         return (received == nullptr) ? nullptr : new DataFrame(received->blob_);
     } else {
         Get* g = new Get(idx_, k.node_, 1234, &k);
@@ -761,7 +763,7 @@ inline void KVStore::configure(const char* ip, int port, const char* serverIp, i
     nconfig_.running = false;
     nconfig_.listenToServerThread = nullptr;
     nconfig_.listenToNeighborsThread = nullptr;
-    //registerWithServer();
+    registerWithServer();
 }
 
 inline void KVStore::configure(const char* ip, const char* serverIp, int serverPort) {
@@ -908,8 +910,6 @@ inline void KVStore::handleNodeMsg(int fd, unsigned char* msg) {
 }
 
 inline void KVStore::sendToNeighbor(int fd, unsigned char* msg) {
-    
-        std::cout << "2a" << endl << flush;
     if (send(fd, msg, message_length(msg), 0) < 0) {
         assert("Error sending data to neighbor node." && false);
     }
@@ -941,9 +941,10 @@ inline void KVStore::handlePut(int fd, unsigned char* msg) {
 }
 
 inline void KVStore::handleResult(int fd, unsigned char* msg) {
-    if (DEBUG) pln("in handle result");
-    Result* r = new Result(msg);
+    if (DEBUG)  std::cout << "in handle result for node " << idx_ << std::endl;
+    Result* r = new Result(msg); 
     if (r->value_ != nullptr) {
+        if (DEBUG) std::cout << "Size of " << strlen((char*)r->value_->blob_) << std::endl;
         DataFrame* result = new DataFrame(r->value_->blob_);
         waitAndGetValue = result;
         nconfig_.waiting = false;
@@ -954,11 +955,12 @@ inline void KVStore::handleResult(int fd, unsigned char* msg) {
 
 inline void KVStore::handleGet(int fd, unsigned char* msg) {
     Get* incomingGet = new Get(msg);
-    if (DEBUG)  pln("in handle get");
+    if (DEBUG)  std::cout << "in handle get for node " << idx_ << std::endl;
     if (incomingGet->key_->node_ == idx_) {
         Value* v = kv_map_.get(incomingGet->key_);
         if (v != nullptr) {
             Result* r = new Result(v);
+            if (DEBUG) std::cout << "Size of " << strlen((char*)r->value_->blob_) << std::endl;
             sendToNeighbor(nconfig_.neighborSockets[incomingGet->sender_], r->serialize());
             delete r;
         } else {
