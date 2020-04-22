@@ -1,12 +1,12 @@
+linus:
+	g++ -g -pthread -w -std=c++11 test/milestone5.cpp -o m5
+	./m5
+
 wordcount:
 	g++ -g -pthread -w -std=c++11 test/milestone4.cpp -o m4	
 	cp test/wordcount.txt .
 	./m4
 	
-linus:
-	g++ -g -pthread -w -std=c++11 test/milestone5.cpp -o m5
-	./m5
-
 distributed:
 	g++ -g -pthread -w  -std=c++11 test/distributed.cpp -o distributed
 	./distributed

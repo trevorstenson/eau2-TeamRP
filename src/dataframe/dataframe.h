@@ -262,20 +262,20 @@ public:
         }
     }
     virtual void set(size_t col, size_t row, bool val) {
-        printf("in set for bool\n");
+        if (DEBUG) printf("in set for bool\n");
         checkIndices(col, row, 'B');
         schema->new_length(row);
-        printf("after schema access\n");
+        if (DEBUG) printf("after schema access\n");
         fflush(stdout);
         BoolColumn *column = columns[col]->as_bool();
-        printf("after get column\n");
+        if (DEBUG) printf("after get column\n");
         fflush(stdout);
         if (!column) {
             assert("Unable to cast as BoolColumn." && false);
         } else {
             column->set(row, val);
         }
-        printf("done with method set\n");
+        if (DEBUG) printf("done with method set\n");
         fflush(stdout);
     }
     virtual void set(size_t col, size_t row, double val) {
@@ -697,7 +697,6 @@ inline bool KVStore::containsKey(Key *k) {
 inline Value *KVStore::put(Key &k, Value *v) {
     // data is stored in local kvstore
     if (idx_ == k.node_) {
-        std::cout << "Storing key " << k.name_->c_str() << " on node " << idx_ << std::endl;
         return kv_map_.put(&k, v);
     } else {
         Put* p = new Put(idx_, k.node_, 1234, &k, v);

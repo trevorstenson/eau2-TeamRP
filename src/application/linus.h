@@ -195,7 +195,7 @@ public:
  **************************************************************************/
 class Linus : public Application {
 public:
-  int DEGREES = 4;  // How many degrees of separation form linus?
+  int DEGREES = 5;  // How many degrees of separation form linus?
   int LINUS = 1;   // The uid of Linus (offset in the user df) //WAS 4967 - changed to heroku
   const char* PROJ = "datasets/projects.ltgt";
   const char* USER = "datasets/users.ltgt";

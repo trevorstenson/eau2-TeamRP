@@ -278,10 +278,8 @@ class BoolColumn : public Column {
 
   /** Set value at idx. An out of bound idx is undefined.  */
   void set(size_t idx, bool val) {
-    printf("in set in boolcol\n");
     fflush(stdout);
     ensureSubArray(idx);
-    printf("after ensuring\n");
     fflush(stdout);
     if (idx >= len_) {
       for (size_t i = len_; i < idx; i++) {
