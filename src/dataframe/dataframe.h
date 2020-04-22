@@ -105,6 +105,10 @@ public:
     size_t col_cap;
     Column **columns;
 
+    DataFrame() {
+
+    }
+
     /** Create a data frame with the same columns as the given df but with no rows or rownmaes */
     DataFrame(DataFrame &df) {
         Schema *newSchema = new Schema(df.schema->types);
@@ -166,8 +170,6 @@ public:
     /** Returns the dataframe's schema. Modifying the schema after a dataframe
     * has been created in undefined. */
     Schema &get_schema() {
-        //Schema* temp = new Schema(schema);
-        //return *temp;
         return *schema;
     }
 
@@ -229,19 +231,19 @@ public:
 
     /** Return the value at the given column and row. Accessing rows or
    *  columns out of bounds, or request the wrong type is undefined.*/
-    int get_int(size_t col, size_t row) {
+    virtual int get_int(size_t col, size_t row) {
         checkIndices(col, row, 'I');
         return columns[col]->as_int()->get(row);
     }
-    bool get_bool(size_t col, size_t row) {
+    virtual bool get_bool(size_t col, size_t row) {
         checkIndices(col, row, 'B');
         return columns[col]->as_bool()->get(row);
     }
-    double get_double(size_t col, size_t row) {
+    virtual double get_double(size_t col, size_t row) {
         checkIndices(col, row, 'D');
         return columns[col]->as_double()->get(row);
     }
-    String *get_string(size_t col, size_t row) {
+    virtual String *get_string(size_t col, size_t row) {
         checkIndices(col, row, 'S');
         return columns[col]->as_string()->get(row);
     }
@@ -249,7 +251,7 @@ public:
     /** Set the value at the given column and row to the given value.
     * If the column is not  of the right type or the indices are out of
     * bound, the result is undefined. */
-    void set(size_t col, size_t row, int val) {
+    virtual void set(size_t col, size_t row, int val) {
         checkIndices(col, row, 'I');
         schema->new_length(row);
         IntColumn *column = columns[col]->as_int();
@@ -259,17 +261,24 @@ public:
             column->set(row, val);
         }
     }
-    void set(size_t col, size_t row, bool val) {
+    virtual void set(size_t col, size_t row, bool val) {
+        if (DEBUG) printf("in set for bool\n");
         checkIndices(col, row, 'B');
         schema->new_length(row);
+        if (DEBUG) printf("after schema access\n");
+        fflush(stdout);
         BoolColumn *column = columns[col]->as_bool();
+        if (DEBUG) printf("after get column\n");
+        fflush(stdout);
         if (!column) {
             assert("Unable to cast as BoolColumn." && false);
         } else {
             column->set(row, val);
         }
+        if (DEBUG) printf("done with method set\n");
+        fflush(stdout);
     }
-    void set(size_t col, size_t row, double val) {
+    virtual void set(size_t col, size_t row, double val) {
         checkIndices(col, row, 'D');
         schema->new_length(row);
         DoubleColumn *column = columns[col]->as_double();
@@ -279,7 +288,7 @@ public:
             column->set(row, val);
         }
     }
-    void set(size_t col, size_t row, String *val) {
+    virtual void set(size_t col, size_t row, String *val) {
         checkIndices(col, row, 'S');
         schema->new_length(row);
         StringColumn *column = columns[col]->as_string();
@@ -496,7 +505,7 @@ public:
         return newDf;
     }
 
-    //static DataFrame *fromFile(const char* file, Key *key, KVStore kv) Not implemented to avoid cirular references
+    static DataFrame *fromFile(const char* file, Key *key, KVStore kv); //implemented in sor file
 
     static DataFrame *fromScalar(Key *key, KVStore *kv, int value) {
         String *schemaStr = new String("I");
@@ -689,10 +698,7 @@ inline Value *KVStore::put(Key &k, Value *v) {
     if (idx_ == k.node_) {
         return kv_map_.put(&k, v);
     } else {
-        // Send the data to the correct node 
-        std::cout << "1" << endl << flush;
         Put* p = new Put(idx_, k.node_, 1234, &k, v);
-        std::cout << k.node_ << endl << flush;
         sendToNeighbor(nconfig_.neighborSockets[k.node_], p->serialize());
         return nullptr;
     }
@@ -713,9 +719,13 @@ inline DataFrame *KVStore::get(Key &k) {
     }
 }
 inline DataFrame *KVStore::waitAndGet(Key &k) {
-    // data is stored in local kvstore
+    // Data should be stored in local kvstore
     if (idx_ == k.node_) {
-        Value *received = kv_map_.get(&k);
+        Value *received = nullptr;
+        while (received == nullptr) {
+            usleep(250000);
+            received = kv_map_.get(&k);
+        }
         return (received == nullptr) ? nullptr : new DataFrame(received->blob_);
     } else {
         Get* g = new Get(idx_, k.node_, 1234, &k);
@@ -898,8 +908,6 @@ inline void KVStore::handleNodeMsg(int fd, unsigned char* msg) {
 }
 
 inline void KVStore::sendToNeighbor(int fd, unsigned char* msg) {
-    
-        std::cout << "2a" << endl << flush;
     if (send(fd, msg, message_length(msg), 0) < 0) {
         assert("Error sending data to neighbor node." && false);
     }
@@ -931,9 +939,10 @@ inline void KVStore::handlePut(int fd, unsigned char* msg) {
 }
 
 inline void KVStore::handleResult(int fd, unsigned char* msg) {
-    if (DEBUG) pln("in handle result");
-    Result* r = new Result(msg);
+    if (DEBUG)  std::cout << "in handle result for node " << idx_ << std::endl;
+    Result* r = new Result(msg); 
     if (r->value_ != nullptr) {
+        if (DEBUG) std::cout << "Size of " << strlen((char*)r->value_->blob_) << std::endl;
         DataFrame* result = new DataFrame(r->value_->blob_);
         waitAndGetValue = result;
         nconfig_.waiting = false;
@@ -944,11 +953,12 @@ inline void KVStore::handleResult(int fd, unsigned char* msg) {
 
 inline void KVStore::handleGet(int fd, unsigned char* msg) {
     Get* incomingGet = new Get(msg);
-    if (DEBUG)  pln("in handle get");
+    if (DEBUG)  std::cout << "in handle get for node " << idx_ << std::endl;
     if (incomingGet->key_->node_ == idx_) {
         Value* v = kv_map_.get(incomingGet->key_);
         if (v != nullptr) {
             Result* r = new Result(v);
+            if (DEBUG) std::cout << "Size of " << strlen((char*)r->value_->blob_) << std::endl;
             sendToNeighbor(nconfig_.neighborSockets[incomingGet->sender_], r->serialize());
             delete r;
         } else {

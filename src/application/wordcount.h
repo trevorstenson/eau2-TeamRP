@@ -1,153 +1,128 @@
 #include "application.h"
-#include "../dataframe/dataframe.h"
+#include "../dataframe/sor.h"
 #include "../dataframe/visitor.h"
 #include "../dataframe/rower.h"
-//#include <../map.h>
+#include <map>
 #include "assert.h"
 #include <cstring>
 #include <iostream>
 #include <stdio.h>
 
-class FileReader : public Visitor {
+// Convenience to get the key at index
+Key* get_key(size_t index, bool words) {
+    string key_str = words ? "words-" : "map-";
+    key_str.append(to_string(index));
+    Key* k = new Key(key_str.c_str());
+    return k;
+}
+
+class FileReader {
 public:
-  /** Reads next word and stores it in the row. Actually read the word.
-      While reading the word, we may have to re-fill the buffer  */
-    void visit(Row & r) override {
-        assert(i_ < end_);
-        assert(! isspace(buf_[i_]));
-        size_t wStart = i_;
-        while (true) {
-            if (i_ == end_) {
-                if (feof(file_)) { ++i_;  break; }
-                i_ = wStart;
-                wStart = 0;
-                fillBuffer_();
-            }
-            if (isspace(buf_[i_]))  break;
-            ++i_;
+    DataFrame* all_words;
+    int counter = 0;
+    String* temp;
+    int upper_bound;
+
+    void chunk(size_t chunks, KVStore* store) {
+      for (int i = 0; i < chunks; i++) {
+        Schema* schema = new Schema("S");
+        DataFrame* df = new DataFrame(*schema);
+        upper_bound = all_words->nrows() * (i + 1) / chunks;
+        for (int j = counter; j < upper_bound; j++) {
+          temp = all_words->get_string(0, counter);
+          assert(temp != nullptr);
+          df->set(0, df->nrows(), temp);
+          counter++;
         }
-        buf_[i_] = 0;
-        String word(buf_ + wStart, i_ - wStart);
-        r.set(0, &word);
-        ++i_;
-        skipWhitespace_();
+        unsigned char* serial = df->serialize();
+        DataFrame* test = new DataFrame(serial);
+        Value* v = new Value(serial, extract_size_t(serial, 0));
+        store->put(*get_key(i, true), v);
+      }
     }
- 
-    /** Returns true when there are no more words to read.  There is nothing
-       more to read if we are at the end of the buffer and the file has
-       all been read.     */
-    bool done() override { return (i_ >= end_) && feof(file_);  }
- 
+
     /** Creates the reader and opens the file for reading.  */
     FileReader() {
-        file_ = fopen("test/wordcount.txt", "r");
-        if (file_ == nullptr) assert("Cannot open file wordcount.txt");
-        buf_ = new char[BUFSIZE + 1]; //  null terminator
-        fillBuffer_();
-        skipWhitespace_();
+        SorAdapter* sor = new SorAdapter(0, 10000, "wordcount.txt");
+        all_words = sor->df_;
     }
- 
-    static const size_t BUFSIZE = 1024;
- 
-    /** Reads more data from the file. */
-    void fillBuffer_() {
-        size_t start = 0;
-        // compact unprocessed stream
-        if (i_ != end_) {
-            start = end_ - i_;
-            memcpy(buf_, buf_ + i_, start);
-        }
-        // read more contents
-        end_ = start + fread(buf_+start, sizeof(char), BUFSIZE - start, file_);
-        i_ = start;
-    }
- 
-    /** Skips spaces.  Note that this may need to fill the buffer if the
-        last character of the buffer is space itself.  */
-    void skipWhitespace_() {
-        while (true) {
-            if (i_ == end_) {
-                if (feof(file_)) return;
-                fillBuffer_();
-            }
-            // if the current character is not whitespace, we are done
-            if (!isspace(buf_[i_]))
-                return;
-            // otherwise skip it
-            ++i_;
-        }
-    }
- 
-    char * buf_;
-    size_t end_ = 0;
-    size_t i_ = 0;
-    FILE * file_;
 };
+
+class Merger : public Rower {
+public:
+  std::map<std::string, int> map_;
+
+  Merger(std::map<std::string, int>& map) {
+    map_ = map;
+  }
+
+  bool accept(Row& r) override {
+    String* word = r.get_string(0);
+    int add_amt = r.get_int(1);
+    assert(word != nullptr);
+    map_[std::string(word->c_str())] += add_amt;
+    //std::cout << "map_[" << std::string(word->c_str()) << "] = " << map_[std::string(word->c_str())] << std::endl;
+    return false;
+  }
+
+  void print_results() {
+    std::cout << "\n\nWORD COUNTS:\n";
+
+    std::map<std::string, int>::iterator it = map_.begin();
  
+    // Iterate over the map using c++11 range based for loop
+    for (std::pair<std::string, int> element : map_) {
+      std::cout << "    " << element.first << ": " << element.second << std::endl;
+    } 
+
+    std::cout << "TOTAL WORDS: " << map_.size() << std::endl;
+  }
+};
  
 /****************************************************************************/
 class Adder : public Rower {
 public:
-  SIMap& map_;  // String to Num map;  Num holds an int
- 
-  Adder(SIMap& map) : map_(map)  {}
+  std::map<std::string, int> map_; // String to Num map;  Num holds an int
+  DataFrame* df;
+
+  Adder(std::map<std::string, int>& map) {
+    map_ = map;
+  }
  
   bool accept(Row& r) override {
     String* word = r.get_string(0);
+    int add_amt = 1;
+    if (r.width() > 1) add_amt = r.get_int(1);
     assert(word != nullptr);
-    Integer* num = map_.containsKey(word) ? map_.get(word) : new Integer();
-    assert(num != nullptr);
-    num->val_++;
-    map_.set(*word, num);
+    map_[std::string(word->c_str())] += add_amt;
+    //std::cout << "map_[" << std::string(word->c_str()) << "] = " << map_[std::string(word->c_str())] << std::endl;
     return false;
   }
-};
+
+  void build() {
+    Schema* schema = new Schema("SI");
+    df = new DataFrame(*schema);
+
+    	// Create a map iterator and point to beginning of map
+	  std::map<std::string, int>::iterator it = map_.begin();
  
-/***************************************************************************/
-class Summer : public Visitor {
-public:
-  SIMap& map_;
-  size_t i = 0;
-  size_t j = 0;
-  size_t seen = 0;
- 
-  Summer(SIMap& map) : map_(map) {}
- 
-  void next() {
-      if (i == map_.capacity_ ) return;
-      if ( j < map_.size() ) {
-          j++;
-          ++seen;
-      } else {
-          ++i;
-          j = 0;
-          while( i < map_.capacity_ && map_.size() == 0 )  i++;
-          if (k()) ++seen;
-      }
+    // Iterate over the map using c++11 range based for loop
+    int row = 0;
+    for (std::pair<std::string, int> element : map_) {
+      std::string word = element.first;
+      int count = element.second;
+      df->set(0, row, new String(word.c_str()));
+      df->set(1, row, count);
+      row++;
+    } 
   }
- 
-  String* k() {
-      if (i==map_.capacity_ || j == map_.size()) return nullptr;
-      return (String*)(map_.values_[i]->getKey());
+
+  void store(size_t index, KVStore* store) {
+    unsigned char* serial = df->serialize();
+    DataFrame* test = new DataFrame(serial);
+    Value* v = new Value(serial, extract_size_t(serial, 0));
+    store->put(*get_key(index, false), v);
   }
- 
-  size_t v() {
-      if (i == map_.capacity_ || j == map_.size()) {
-          assert(false); return 0;
-      }
-      return ((size_t)(dynamic_cast<Integer*>(map_.values_[i]->getValue()))->get());
-  }
- 
-  void visit(Row& r) {
-      if (!k()) next();
-      String & key = *k();
-      size_t value = v();
-      r.set(0, &key);
-      r.set(1, (int) value);
-      next();
-  }
- 
-  bool done() {return seen == map_.size(); }
 };
  
 /****************************************************************************
@@ -158,70 +133,60 @@ public:
  **********************************************************author: pmaj ****/
 class WordCount : public Application {
 public:
-  static const size_t BUFSIZE = 1024;
-  Key in;
-  KeyBuff kbuf;
-  SIMap all;
+    static const size_t BUFSIZE = 1024;
+    SIMap all;
+    size_t nodes;
  
-  WordCount(size_t idx):
-    Application(idx), in("data"), kbuf(new Key("wc-map-",0)) { }
+    WordCount(size_t idx, size_t nodes_): Application(idx) { 
+      nodes = nodes_;
+    }
  
   /** The master nodes reads the input, then all of the nodes count. */
   void run_() override {
-    std::cout << "+run() -fromVisitor" << std::endl << flush;
+    std::cout << "Starting Node " << idx_ << std::endl;
     if (idx_ == 0) {
       FileReader fr;
-      delete DataFrame::fromVisitor(&in, &kv, "S", &fr);
+      fr.chunk(nodes, &kv);
     }
-    std::cout << "+run() -local-count()" << std::endl << flush;
     local_count();
-    std::cout << "+run() -reduce()" << std::endl << flush;
     reduce();
-  }
- 
-  /** Returns a key for given node.  These keys are homed on master node
-   *  which then joins them one by one. */
-  Key* mk_key(size_t idx) {
-      Key * k = kbuf.c(idx).get();
-      //printf("Created key %s", k->c_str());
-      return k;
   }
  
   /** Compute word counts on the local node and build a data frame. */
   void local_count() {
-    DataFrame* words = (kv.waitAndGet(in));
+    DataFrame* words = (kv.waitAndGet(*get_key(idx_, true)));
     p("Node ").p(idx_).pln(": starting local count...");
-    SIMap map;
+    map<std::string, int> map;
     Adder add(map);
-    //words->localmap(add);
     words->map(add);
+    add.build();
+    add.store(idx_, &kv);
     delete words;
-    Summer cnt(map);
-    delete DataFrame::fromVisitor(mk_key(idx_), &kv, "SI", &cnt);
-
   }
  
   /** Merge the data frames of all nodes */
   void reduce() {
-    if (idx_ != 0) return;
+    if (idx_ > 0) return;
     pln("Node 0: reducing counts...");
-    SIMap map;
-    Key* own = mk_key(0);
-    std::cout << "2" << endl << std::flush;
-    merge(kv.get(*own), map);
-    std::cout << "2" << endl << std::flush;
-    for (size_t i = 1; i < 3; ++i) { // merge other nodes
-      Key* ok = mk_key(i);
-      merge(kv.waitAndGet(*ok), map);
+    DataFrame** dfs = new DataFrame*[2];
+    Key* own = get_key(0, false);
+    dfs[0] = kv.get(*own);
+    std::cout << "Getting other nodes... " << std::endl << std::flush;
+    for (size_t i = 1; i < 2; ++i) { // merge other nodes
+      Key* ok = get_key(i, false);
+      dfs[1] = kv.waitAndGet(*ok);
       delete ok;
     }
-    p("Different words: ").pln(map.size());
+    merge(dfs);
     delete own;
   }
  
-  void merge(DataFrame* df, SIMap& m) {
-    Adder add(m);
-    df->map(add);
-    delete df;
+  void merge(DataFrame** dfs) {
+    map<std::string, int> map;
+    Merger m(map);
+    for (int i = 0; i < 2; i++) {
+      dfs[i]->map(m);
+    }
+    m.print_results();
   }
 }; // WordcountDemo

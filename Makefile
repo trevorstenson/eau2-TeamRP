@@ -1,12 +1,24 @@
-milestone:
+linus:
 	g++ -g -pthread -w -std=c++11 test/milestone5.cpp -o m5
 	./m5
 
+wordcount:
+	g++ -g -pthread -w -std=c++11 test/milestone4.cpp -o m4	
+	cp test/wordcount.txt .
+	./m4
+	
+distributed:
+	g++ -g -pthread -w  -std=c++11 test/distributed.cpp -o distributed
+	./distributed
+
+valgrind:
+	valgrind --leak-check=full ./m5
+
 previous_milestones:
 	g++ -g -pthread -w -std=c++11 test/milestone2.cpp -o m2
+	./m2
 	#g++ -g -pthread -w -std=c++11 test/milestone3.cpp -o m3
 	#NOTE: M3 can no longer run, as mock networking functionality has been removed.
-	./m2
 	g++ -g -pthread -w -std=c++11 test/milestone4.cpp -o m4	
 	cp test/wordcount.txt .
 	./m4
@@ -42,5 +54,6 @@ clean:
 	rm ./m4 || true
 	rm ./m5 || true
 	rm wordcount.txt || true
+	rm ./distributed || true
 	
-.PHONY: build test clean
+.PHONY: build test clean distributed

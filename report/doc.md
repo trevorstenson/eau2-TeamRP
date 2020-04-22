@@ -8,6 +8,26 @@ The eau2 system that we have been tasked with implementing can be described as a
 
 #
 
+### Status
+We have successfully implemented basic functionality for the Linus application by building upon the starter code provided. 
+Currently, our application successfully runs on a single node without any networking functionality for a subset of data. 
+We decided to first implement it this way because we were not fully confident in our networking layer's reliability due to both connectivity issues during network setup, as well as a lack of failure mechanisms when data happened to be lost. 
+Because the Linus application requires so much data to fully process the result, we did not trust our initial networking layer to handle that load. 
+Additionally, it was much easier to debug the Linus functionality without worrying about any potential networking issues popping up.
+A summary of completed components is below. 
+
+#### Completed components
+* SOR adapter is integrated with DataFrame
+* Processing of DataFrames with Fielders, Rowers, and Visitors
+* Serialization of DataFrames and Messages
+* Exchange of DataFrames between KVStores on separate nodes, however inconsistently (Demo-able with M4 WordCount)
+* Linus has been adapted to our implementation, however it will only successfully run on 1 node
+
+#### Outstanding issues
+* Networking inconsistencies
+
+#
+
 ### Architecture
 
 From a high-level, the major components required to fully implement the eau2 application are a general distributed key value store, a distributed Array and DataFrame that serve as an abstraction layer on top of the key value store, and the final application layer where any code making use of DataFrames is written. The distributed key value store is the most important building block in the application as it encapsulates all of the socket-based networking functionality required to manage and orchestrate a set of nodes storing part of the application’s data in independent key value stores. This layer can be interacted with just like a conventional key-value storage data structure because all of the networking logic will be hidden from the user internally.
@@ -35,28 +55,3 @@ From here, a user can specify operations they wish to perform on the data. The o
 
 Currently, we have provided application code for two realistic use-cases. The first application reads in a text file and counts the occurrences for each unique word. 
 The second application accomplishes the much more difficult task of computing all github users who have worked on software projects in some capacity with Linus Torvalds up to seven degrees away.
-
-#
-
-### Open Questions
-One question we have is what kinds of operations should we be supporting when operating on the DataFrame? The speed of the operations supported relative to the speed of a network communication may change how we want to structure the distributed DataFrame. If the operations are very fast, we want to be sure to minimize network calls required to parse the entire DataFrame. However, if the operations are long and intensive, then many network calls will not have as great of a relative effect on execution speed.
-
-A second question is how much we can expect data to change once it has been read in from a schema on read file. This will affect how we balance data between different nodes. If we can expect the size of the DataFrame to remain relatively constant, then it will likely be best to equally distribute all data across the nodes. However, if we expect the data set to change, this may not be the optimal route.
-
-#
-
-### Status
-A prototype implementation has been created, assembling the various components of the eau2 system. While the majority of the pieces are present, the pieces are not all connected at the moment.
-
-To start, the schema-on-read adapter has been hooked up to our original DataFrame. We can be sure that we are able to read in files, all that needs to be changed is the way a DataFrame stores data. 
-
-Additionally, the network layer has been built, including the serialization of all messages and data types needed for communication among nodes. However, the actual logic to connect and pass data between nodes has not been implemented. 
-
-The distributed KVStore has been brought together for full networking functionality. Currently the code samples provided through milestone three run properly with our system. Milestone 4 runs from a networking perspective, but due to memory issues with the DataFrame::fromVisitor method, we cannot run the example provided. Instead, we have implemented a simplified version that does not require the DataFrame::fromVisitor method. 
-
-For Milestone 5, we have successfully implemented basic functionality for the Linus application by building upon the starter code provided. 
-Currently, our application successfully runs on a single node without any networking functionality for a subset of data. 
-We decided to first implement it this way because we were not fully confident in our networking layer's reliability due to both connectivity issues during network setup, as well as a lack of failure mechanisms when data happened to be lost. 
-Because the Linus application requires so much data to fully process the result, we did not trust our initial networking layer to handle that load. 
-Additionally, it was much easier to debug the Linus functionality without worrying about any potential networking issues popping up.
-Prior to our final code review, our mission is to integrate networking functionality into our Linus application so that we are able to fully process the data we were provided.
