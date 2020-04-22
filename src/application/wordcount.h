@@ -1,5 +1,5 @@
 #include "application.h"
-#include "../dataframe/dataframe.h"
+#include "../dataframe/sor.h"
 #include "../dataframe/visitor.h"
 #include "../dataframe/rower.h"
 //#include <../map.h>
@@ -8,80 +8,38 @@
 #include <iostream>
 #include <stdio.h>
 
-class FileReader : public Visitor {
+// Convenience to get the key at index
+Key* get_key(size_t index) {
+    string key_str = "key-";
+    key_str.append(to_string(index));
+    Key* k = new Key(key_str.c_str());
+    return k;
+}
+
+class FileReader {
 public:
-  /** Reads next word and stores it in the row. Actually read the word.
-      While reading the word, we may have to re-fill the buffer  */
-    void visit(Row & r) override {
-        assert(i_ < end_);
-        assert(! isspace(buf_[i_]));
-        size_t wStart = i_;
-        while (true) {
-            if (i_ == end_) {
-                if (feof(file_)) { ++i_;  break; }
-                i_ = wStart;
-                wStart = 0;
-                fillBuffer_();
-            }
-            if (isspace(buf_[i_]))  break;
-            ++i_;
+    DataFrame* all_words;
+    int counter = 0;
+
+    void chunk(size_t chunks, KVStore* store) {
+      for (int i = 0; i < chunks; i++) {
+        DataFrame* df = new DataFrame(*all_words);
+        for (int j = counter; j < all_words->nrows() * (i + 1) / chunks; j++) {
+          df->set(0, df->nrows(), all_words->get_string(0, counter));
+          counter++;
         }
-        buf_[i_] = 0;
-        String word(buf_ + wStart, i_ - wStart);
-        r.set(0, &word);
-        ++i_;
-        skipWhitespace_();
+        unsigned char* serial = df->serialize();
+        Value* v = new Value(serial, strlen((char*) serial));
+        store->put(*get_key(i), v);
+      }
     }
- 
-    /** Returns true when there are no more words to read.  There is nothing
-       more to read if we are at the end of the buffer and the file has
-       all been read.     */
-    bool done() override { return (i_ >= end_) && feof(file_);  }
- 
+
     /** Creates the reader and opens the file for reading.  */
     FileReader() {
-        file_ = fopen("test/wordcount.txt", "r");
-        if (file_ == nullptr) assert("Cannot open file wordcount.txt");
-        buf_ = new char[BUFSIZE + 1]; //  null terminator
-        fillBuffer_();
-        skipWhitespace_();
+        SorAdapter* sor = new SorAdapter(0, 10000, "wordcount.txt");
+        all_words = sor->df_;
+        delete sor;
     }
- 
-    static const size_t BUFSIZE = 1024;
- 
-    /** Reads more data from the file. */
-    void fillBuffer_() {
-        size_t start = 0;
-        // compact unprocessed stream
-        if (i_ != end_) {
-            start = end_ - i_;
-            memcpy(buf_, buf_ + i_, start);
-        }
-        // read more contents
-        end_ = start + fread(buf_+start, sizeof(char), BUFSIZE - start, file_);
-        i_ = start;
-    }
- 
-    /** Skips spaces.  Note that this may need to fill the buffer if the
-        last character of the buffer is space itself.  */
-    void skipWhitespace_() {
-        while (true) {
-            if (i_ == end_) {
-                if (feof(file_)) return;
-                fillBuffer_();
-            }
-            // if the current character is not whitespace, we are done
-            if (!isspace(buf_[i_]))
-                return;
-            // otherwise skip it
-            ++i_;
-        }
-    }
- 
-    char * buf_;
-    size_t end_ = 0;
-    size_t i_ = 0;
-    FILE * file_;
 };
  
  
@@ -158,60 +116,50 @@ public:
  **********************************************************author: pmaj ****/
 class WordCount : public Application {
 public:
-  static const size_t BUFSIZE = 1024;
-  Key in;
-  KeyBuff kbuf;
-  SIMap all;
+    static const size_t BUFSIZE = 1024;
+    SIMap all;
+    size_t nodes;
  
-  WordCount(size_t idx):
-    Application(idx), in("data"), kbuf(new Key("wc-map-",0)) { }
+    WordCount(size_t idx, size_t nodes_): Application(idx) { 
+      nodes = nodes_;
+    }
  
   /** The master nodes reads the input, then all of the nodes count. */
   void run_() override {
-    std::cout << "+run() -fromVisitor" << std::endl << flush;
     if (idx_ == 0) {
+      std::cout << "+run() -reading in on Node 0" << std::endl << flush;
       FileReader fr;
-      delete DataFrame::fromVisitor(&in, &kv, "S", &fr);
+      fr.chunk(nodes, &kv);
     }
     std::cout << "+run() -local-count()" << std::endl << flush;
     local_count();
     std::cout << "+run() -reduce()" << std::endl << flush;
     reduce();
   }
- 
-  /** Returns a key for given node.  These keys are homed on master node
-   *  which then joins them one by one. */
-  Key* mk_key(size_t idx) {
-      Key * k = kbuf.c(idx).get();
-      //printf("Created key %s", k->c_str());
-      return k;
-  }
+
+
  
   /** Compute word counts on the local node and build a data frame. */
   void local_count() {
-    DataFrame* words = (kv.waitAndGet(in));
+    DataFrame* words = (kv.waitAndGet(*get_key(idx_)));
     p("Node ").p(idx_).pln(": starting local count...");
     SIMap map;
     Adder add(map);
-    //words->localmap(add);
     words->map(add);
     delete words;
-    Summer cnt(map);
-    delete DataFrame::fromVisitor(mk_key(idx_), &kv, "SI", &cnt);
-
+    //Summer cnt(map);
+    //delete DataFrame::fromVisitor(get_key(idx_), &kv, "SI", &cnt);
   }
  
   /** Merge the data frames of all nodes */
   void reduce() {
-    if (idx_ != 0) return;
+    if (idx_ >= 0) return;
     pln("Node 0: reducing counts...");
     SIMap map;
-    Key* own = mk_key(0);
-    std::cout << "2" << endl << std::flush;
+    Key* own = get_key(0);
     merge(kv.get(*own), map);
-    std::cout << "2" << endl << std::flush;
     for (size_t i = 1; i < 3; ++i) { // merge other nodes
-      Key* ok = mk_key(i);
+      Key* ok = get_key(i);
       merge(kv.waitAndGet(*ok), map);
       delete ok;
     }

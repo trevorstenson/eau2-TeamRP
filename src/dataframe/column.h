@@ -127,15 +127,12 @@ class IntColumn : public Column {
 
   /**Ensures the smaller subarray is large enough/instantiated. */
   void ensureSubArray(size_t idx) {
-    printf("in ensuresubarray\n");
     fflush(stdout);
     size_t arrayIndex = getParentIndex(idx);
     if (vals_[arrayIndex] == nullptr) {
       int count = (int)pow(2, arrayIndex);
-      printf("before setting..\n");
       fflush(stdout);
       vals_[arrayIndex] = new int[count];
-      printf("after set\n");
       fflush(stdout);
     }
   }

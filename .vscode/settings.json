@@ -6,6 +6,7 @@
         "filesystem": "cpp",
         "stdexcept": "cpp",
         "string": "cpp",
-        "new": "cpp"
+        "new": "cpp",
+        "thread": "cpp"
     }
 }
