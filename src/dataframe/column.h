@@ -28,6 +28,8 @@ class Column : public Object {
   size_t len_;
 
   Column() { }
+
+  virtual ~Column() { }
  
   /** Type converters: Return same column under its actual type, or
    *  nullptr if of the wrong type.  */
@@ -208,9 +210,6 @@ class IntColumn : public Column {
   }
 
   ~IntColumn() {
-    for (size_t i = 0; i < len_; i++) {
-      delete[] vals_[i];
-    }
     delete[] vals_;
   }
 };
@@ -340,9 +339,6 @@ class BoolColumn : public Column {
   }
 
   ~BoolColumn() {
-    for (size_t i = 0; i < len_; i++) {
-      delete[] vals_[i];
-    }
     delete[] vals_;
   }
 };
@@ -468,9 +464,6 @@ class DoubleColumn : public Column {
   }
 
   ~DoubleColumn() {
-    for (size_t i = 0; i < len_; i++) {
-      delete[] vals_[i];
-    }
     delete[] vals_;
   }
 };
@@ -597,9 +590,6 @@ class StringColumn : public Column {
   }
 
   ~StringColumn() {
-    for (size_t i = 0; i < len_; i++) {
-      delete[] vals_[i];
-    }
     delete[] vals_;
   }
 };

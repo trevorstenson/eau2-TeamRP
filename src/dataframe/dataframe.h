@@ -667,8 +667,7 @@ public:
         return index;
     };
 
-    ~DataFrame()
-    {
+    ~DataFrame() {
         delete[] columns;
     }
 };
