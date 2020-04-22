@@ -15,6 +15,7 @@ We decided to first implement it this way because we were not fully confident in
 Because the Linus application requires so much data to fully process the result, we did not trust our initial networking layer to handle that load. 
 Additionally, it was much easier to debug the Linus functionality without worrying about any potential networking issues popping up.
 A summary of completed components is below. 
+The Milestone 4 Wordcount application has been successfully implemented as well.
 
 #### Completed components
 * SOR adapter is integrated with DataFrame
@@ -25,6 +26,7 @@ A summary of completed components is below.
 
 #### Outstanding issues
 * Networking inconsistencies
+* Minor memory leaks
 
 #
 
